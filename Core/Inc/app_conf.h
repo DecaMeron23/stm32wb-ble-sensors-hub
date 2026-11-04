@@ -516,8 +516,8 @@
 
 #define CFG_RTCCLK_DIV            (16)
 #define CFG_RTC_WUCKSEL_DIVIDER   (0)
-#define CFG_RTC_ASYNCH_PRESCALER  (0x0F)
-#define CFG_RTC_SYNCH_PRESCALER   (0x7FFF)
+#define CFG_RTC_ASYNCH_PRESCALER  (0x1F)
+#define CFG_RTC_SYNCH_PRESCALER   (0x03E7)
 
 #else
 

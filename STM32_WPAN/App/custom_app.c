@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+extern RTC_HandleTypeDef hrtc;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,7 +109,13 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_DATETIME_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_DATETIME_READ_EVT */
-
+      RTC_TimeTypeDef time = {0};
+      RTC_DateTypeDef date = {0};
+      HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BCD);
+      HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
+      uint8_t payload[7] = {time.Seconds, time.Minutes, time.Hours, date.WeekDay,
+                            date.Date,    date.Month,   date.Year};
+      Custom_STM_App_Update_Char(CUSTOM_STM_DATETIME, payload);
       /* USER CODE END CUSTOM_STM_DATETIME_READ_EVT */
       break;
 
