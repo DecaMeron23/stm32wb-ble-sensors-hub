@@ -24,8 +24,6 @@
 #include "ble.h"
 #include "cmsis_gcc.h"
 #include "custom_stm.h"
-#include "dbg_trace.h"
-#include "main.h"
 #include "stm32_seq.h"
 #include "stm32wbxx_hal.h"
 
@@ -36,29 +34,28 @@ extern RTC_HandleTypeDef hrtc;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef struct {
+typedef struct
+{
   /* INFO */
   /* SENSORS */
-  uint8_t Temp_Notification_Status;
+  uint8_t               Temp_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
 
   /* USER CODE END CUSTOM_APP_Context_t */
 
-  uint16_t ConnectionHandle;
+  uint16_t              ConnectionHandle;
 } Custom_App_Context_t;
 
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
 
-/* Private defines
- * ------------------------------------------------------------*/
+/* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
 /* USER CODE END PD */
 
-/* Private macros
- * -------------------------------------------------------------*/
+/* Private macros -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
@@ -93,16 +90,17 @@ static void Custom_Temp_Send_Notification(void);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
-void Custom_STM_App_Notification(
-    Custom_STM_App_Notification_evt_t *pNotification) {
+void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotification)
+{
   /* USER CODE BEGIN CUSTOM_STM_App_Notification_1 */
     RTC_TimeTypeDef time = {0};
     RTC_DateTypeDef date = {0};
   /* USER CODE END CUSTOM_STM_App_Notification_1 */
-  switch (pNotification->Custom_Evt_Opcode) {
-  /* USER CODE BEGIN CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
+  switch (pNotification->Custom_Evt_Opcode)
+  {
+    /* USER CODE BEGIN CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
-  /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
+    /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
     /* INFO */
     case CUSTOM_STM_UPTIME_READ_EVT:
@@ -140,39 +138,40 @@ void Custom_STM_App_Notification(
 
       HAL_RTC_SetTime(&hrtc, &time, RTC_FORMAT_BCD);
       HAL_RTC_SetDate(&hrtc, &date, RTC_FORMAT_BCD);
-    /* USER CODE END CUSTOM_STM_DATETIME_WRITE_NO_RESP_EVT */
-    break;
 
-  /* SENSORS */
-  case CUSTOM_STM_TEMP_READ_EVT:
-    /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
+      /* USER CODE END CUSTOM_STM_DATETIME_WRITE_NO_RESP_EVT */
+      break;
 
-    /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
-    break;
+    /* SENSORS */
+    case CUSTOM_STM_TEMP_READ_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
 
-  case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
-    /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
+      /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
+      break;
 
-    /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
-    break;
+    case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
 
-  case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
-    /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
+      /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
+      break;
 
-    /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
-    break;
+    case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
 
-  case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
-    /* USER CODE BEGIN CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
+      /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
+      break;
 
-    /* USER CODE END CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
-    break;
+    case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
 
-  default:
-    /* USER CODE BEGIN CUSTOM_STM_App_Notification_default */
+      /* USER CODE END CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
+      break;
 
-    /* USER CODE END CUSTOM_STM_App_Notification_default */
-    break;
+    default:
+      /* USER CODE BEGIN CUSTOM_STM_App_Notification_default */
+
+      /* USER CODE END CUSTOM_STM_App_Notification_default */
+      break;
   }
   /* USER CODE BEGIN CUSTOM_STM_App_Notification_2 */
 
@@ -180,32 +179,34 @@ void Custom_STM_App_Notification(
   return;
 }
 
-void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification) {
+void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
+{
   /* USER CODE BEGIN CUSTOM_APP_Notification_1 */
 
   /* USER CODE END CUSTOM_APP_Notification_1 */
 
-  switch (pNotification->Custom_Evt_Opcode) {
-  /* USER CODE BEGIN CUSTOM_APP_Notification_Custom_Evt_Opcode */
+  switch (pNotification->Custom_Evt_Opcode)
+  {
+    /* USER CODE BEGIN CUSTOM_APP_Notification_Custom_Evt_Opcode */
 
-  /* USER CODE END P2PS_CUSTOM_Notification_Custom_Evt_Opcode */
-  case CUSTOM_CONN_HANDLE_EVT:
-    /* USER CODE BEGIN CUSTOM_CONN_HANDLE_EVT */
+    /* USER CODE END P2PS_CUSTOM_Notification_Custom_Evt_Opcode */
+    case CUSTOM_CONN_HANDLE_EVT :
+      /* USER CODE BEGIN CUSTOM_CONN_HANDLE_EVT */
 
-    /* USER CODE END CUSTOM_CONN_HANDLE_EVT */
-    break;
+      /* USER CODE END CUSTOM_CONN_HANDLE_EVT */
+      break;
 
-  case CUSTOM_DISCON_HANDLE_EVT:
-    /* USER CODE BEGIN CUSTOM_DISCON_HANDLE_EVT */
+    case CUSTOM_DISCON_HANDLE_EVT :
+      /* USER CODE BEGIN CUSTOM_DISCON_HANDLE_EVT */
 
-    /* USER CODE END CUSTOM_DISCON_HANDLE_EVT */
-    break;
+      /* USER CODE END CUSTOM_DISCON_HANDLE_EVT */
+      break;
 
-  default:
-    /* USER CODE BEGIN CUSTOM_APP_Notification_default */
+    default:
+      /* USER CODE BEGIN CUSTOM_APP_Notification_default */
 
-    /* USER CODE END CUSTOM_APP_Notification_default */
-    break;
+      /* USER CODE END CUSTOM_APP_Notification_default */
+      break;
   }
 
   /* USER CODE BEGIN CUSTOM_APP_Notification_2 */
@@ -215,7 +216,8 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification) {
   return;
 }
 
-void Custom_APP_Init(void) {
+void Custom_APP_Init(void)
+{
   /* USER CODE BEGIN CUSTOM_APP_Init */
 
   /* USER CODE END CUSTOM_APP_Init */
@@ -242,7 +244,8 @@ __USED void Custom_Temp_Update_Char(void) /* Property Read */
 
   /* USER CODE END Temp_UC_1*/
 
-  if (updateflag != 0) {
+  if (updateflag != 0)
+  {
     Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, (uint8_t *)UpdateCharData);
   }
 
@@ -260,7 +263,8 @@ __USED void Custom_Temp_Send_Notification(void) /* Property Notification */
 
   /* USER CODE END Temp_NS_1*/
 
-  if (updateflag != 0) {
+  if (updateflag != 0)
+  {
     Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, (uint8_t *)UpdateCharData);
   }
 
