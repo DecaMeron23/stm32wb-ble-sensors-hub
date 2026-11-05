@@ -59,6 +59,19 @@ STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_Operati
     return status;
 }
 
+STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp){
+    if(hstts == NULL || temp == NULL){
+        return STTS22H_STATUS_ERR_NULL;
+    }
+    
+    uint8_t p_value[2] = {0, 0};
+
+    read_register(STTS22H_REG_TEMP_L_OUT, p_value, 2);
+
+    *temp = (int16_t)((uint16_t)(p_value[1] << 8) | p_value[0]);
+    return STTS22H_STATUS_OK;
+}
+
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
     bool result = true;
     result &= HAL_I2C_Mem_Write(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;

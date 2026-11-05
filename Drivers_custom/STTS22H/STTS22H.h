@@ -8,7 +8,6 @@
 #define STTS22H_ADDR_I2C (0x70)
 #define STTS22H_IC2 (hi2c3)
 
-#define STTS22H_SCALING_FATTOR (100)          // LSB/°C
 #define STTS22H_WHO_I_AM (0xA0)
 
 
