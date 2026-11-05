@@ -673,6 +673,7 @@ typedef enum
   CFG_TASK_HCI_ASYNCH_EVT_ID,
   /* USER CODE BEGIN CFG_Task_Id_With_HCI_Cmd_t */
   CFG_TASK_READ_ACC_EVENT_ID,
+  CFG_TASK_READ_TEMP_EVENT_ID,
   /* USER CODE END CFG_Task_Id_With_HCI_Cmd_t */
   CFG_LAST_TASK_ID_WITH_HCICMD,                                               /**< Shall be LAST in the list */
 } CFG_Task_Id_With_HCI_Cmd_t;

@@ -43,6 +43,9 @@ typedef struct
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
   uint8_t               hw_ts_id_timer_acc;
   uint32_t              hw_ts_timeout_acc;        // [ms]
+
+  uint8_t               hw_ts_id_timer_temp;
+  uint32_t              hw_ts_timeout_temp;        // [ms]
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -55,7 +58,8 @@ typedef struct
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
-#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000);      // [s]
+#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000);      // [ms]
+#define CUSTOM_APP_DEFAULT_TIMEOUT_TEMP (5000);      // [ms]
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -94,6 +98,7 @@ static void Custom_Acc_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
 static void Custom_App_AccRead();
+static void Custom_App_TempRead();
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -153,20 +158,21 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_TEMP_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
       // TODO READ temperature
-      uint8_t dummy_data_temp[2] = {0xFF , 0xEE};
-      Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, dummy_data_temp);
+      UTIL_SEQ_SetTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
       /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
       break;
 
     case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = ENABLE;
+      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = DISABLE;
+      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       break;
 
@@ -251,6 +257,10 @@ void Custom_APP_Init(void)
   Custom_App_Context.hw_ts_timeout_acc = CUSTOM_APP_DEFAULT_TIMEOUT_ACC;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
   HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_SingleShot, NULL);
+  
+  Custom_App_Context.hw_ts_timeout_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
+  UTIL_SEQ_RegTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, 0 , Custom_App_TempRead);
+  HW_TS_Create(CFG_TASK_READ_TEMP_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_temp, hw_ts_SingleShot, NULL);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -277,6 +287,18 @@ static void Custom_App_AccRead(){
 
   if(Custom_App_Context.Acc_Notification_Status == ENABLE){
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
+  }
+}
+
+static void Custom_App_TempRead(){
+  // Get DATA
+  uint8_t dummy_data_temp[2] = {0xFF , HAL_GetTick() / 1000 & 0xFF};
+
+  // Send DATA
+  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, dummy_data_temp);
+
+  if(Custom_App_Context.Temp_Notification_Status == ENABLE){
+    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
   }
 }
 /* USER CODE END FD */
