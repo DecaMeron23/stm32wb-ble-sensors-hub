@@ -36,6 +36,13 @@ typedef enum{
     STTS22H_STATUS_GEN_ERR,     // Generic Error
 }STTS22H_Status;
 
+typedef enum{
+    STTS22H_EVENT_NONE      = 0,
+    STTS22H_EVENT_OVER_THH  = (1U << 0), 
+    STTS22H_EVENT_UNDER_THL = (1U << 1),
+    STTS22H_EVENT_BOTH      = STTS22H_EVENT_UNDER_THL | STTS22H_EVENT_OVER_THH
+}STTS22H_EventCode;
+
 typedef struct{
     STTS22H_OperatingModes opt_mode;
     STTS22H_MEAN mean;
@@ -54,5 +61,7 @@ STTS22H_Status STTS22H_DeleteTempHLimit(STTS22H_HandleTypeDef *hstts);
 STTS22H_Status STTS22H_SetTempLLimit(STTS22H_HandleTypeDef *hstts , int8_t temp_l);
 
 STTS22H_Status STTS22H_DeleteTempLLimit(STTS22H_HandleTypeDef *hstts);
+
+STTS22H_Status STTS22H_ReadEvent(STTS22H_HandleTypeDef *hstts , STTS22H_EventCode *event);
 
 #endif

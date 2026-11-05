@@ -94,6 +94,16 @@ STTS22H_Status STTS22H_SetTempLLimit(STTS22H_HandleTypeDef *hstts , int8_t temp_
     return set_temp_limit(hstts, STTS22H_REG_TEMP_L_LIMIT, STTS22H_TEMPERATURE_LIMIT(temp_l));
 }
 
+STTS22H_Status STTS22H_ReadEvent(STTS22H_HandleTypeDef *hstts , STTS22H_EventCode *event){
+    if(hstts == NULL){
+        return STTS22H_STATUS_NULL_ERR;
+    }
+    uint8_t data = 0;
+    STTS22H_Status status = read_register(STTS22H_REG_STATUS, &data, 1);
+    *event = (STTS22H_EventCode) ((data >> 1) & 0X03) ;
+    return status;
+}   
+
 STTS22H_Status STTS22H_DeleteTempLLimit(STTS22H_HandleTypeDef *hstts){
     return set_temp_limit(hstts, STTS22H_REG_TEMP_L_LIMIT, 0);
 }
