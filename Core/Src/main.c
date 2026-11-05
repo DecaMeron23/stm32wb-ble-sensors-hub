@@ -47,7 +47,7 @@ IPCC_HandleTypeDef hipcc;
 RTC_HandleTypeDef hrtc;
 
 /* USER CODE BEGIN PV */
-
+STTS22H_HandleTypeDef hstts = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,7 +108,7 @@ int main(void)
   MX_I2C3_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
-
+  STTS22H_Init(&hstts);
   /* USER CODE END 2 */
 
   /* Init code for STM32_WPAN */
@@ -379,7 +379,7 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin : STTS22H_ALERT_Pin */
