@@ -1,4 +1,4 @@
-### Progetto Sensors HUB
+# Progetto Sensors HUB
 
 Il progetto ha come obiettivo quello di imparare a programmare su una piattaforma embedded e con il BLE.
 
@@ -12,9 +12,9 @@ La board: STM32WB5MM-DK presenta diversi moduli, tra cui:
 - LED RGB e LED infrarosso 
 - Micro-controllore: STM32WB5MMGH6U
 
-![struttura_ble](docs/img/struttura.png)
 
-Descrizione dello stack BLE, servizi:
+## Descrizione dello stack BLE:
+![struttura_ble](docs/img/struttura.png)
 - INFO -- servizio in cui sono presenti le diverse informazioni della board
 - SENSORS -- servizio che gestisce i diversi sensori
 
@@ -27,3 +27,11 @@ Descrizione dello stack BLE, servizi:
 |        |                |               |  
 |SENSORS | Accelerometro  | read, notify  |
 |        | Temperatura    | read, notify  |
+
+
+Obiettivi: 
+- [x] Implementazione del servizio INFO
+- [x] Implementazione del servizio SENSORS
+- [ ] Driver sensore di Temperatura
+- [ ] Driver Accelerometro
+- [ ] Driver Memoria
