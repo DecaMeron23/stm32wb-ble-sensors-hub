@@ -19,12 +19,18 @@ typedef enum{
 }STTS22H_OperatingModes;
 
 typedef enum{
-    STTS22H_ODR_25Hz,
-    STTS22H_ODR_50Hz,
-    STTS22H_ODR_100Hz,
-    STTS22H_ODR_200Hz,
-    STTS22H_ODR_NO_ODR,
+    STTS22H_ODR_25Hz = 0,
+    STTS22H_ODR_50Hz = 1,
+    STTS22H_ODR_100Hz = 2,
+    STTS22H_ODR_200Hz = 3,
 }STTS22H_ODR;
+
+typedef enum{
+    STTS22H_MEAN_8 = 0,     // Equivalent of ODR 25Hz
+    STTS22H_MEAN_4 = 1,     // Equivalent of ODR 50Hz
+    STTS22H_MEAN_2 = 2,     // Equivalent of ODR 100Hz
+    STTS22H_MEAN_1 = 3,     // Equivalent of ODR 200Hz
+}STTS22H_MEAN;
 
 typedef enum{
     STTS22H_STATUS_OK,          // OK
@@ -34,12 +40,12 @@ typedef enum{
 
 typedef struct{
     STTS22H_OperatingModes opt_mode;
-    STTS22H_ODR odr;
+    STTS22H_MEAN mean;
 }STTS22H_HandleTypeDef;
 
 STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts);
 
-STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_ODR odr);
+STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean);
 
 STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp);
 
