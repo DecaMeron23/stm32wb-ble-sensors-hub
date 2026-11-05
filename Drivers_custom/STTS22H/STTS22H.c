@@ -9,12 +9,14 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
         return STTS22H_STATUS_ERR_NULL;
     }
 
+    hstts->opt_mode = STTS22H_MODE_ONE_SHOT;
+    hstts->odr = STTS22H_ODR_NO_ODR;
+
     uint8_t who_i_am = 0;
-    HAL_I2C_Mem_Read(&STTS22H_IC2, STTS22H_ADDR_I2C, STTS22H_REG_WHOAMI, 1, &who_i_am, 1, 100);
+    HAL_I2C_Mem_Read(&STTS22H_IC2, STTS22H_ADDR_I2C, STTS22H_REG_WHOAMI, 1, &who_i_am, 1, HAL_MAX_DELAY);
     
     if (who_i_am != STTS22H_WHO_I_AM){
         return STTS22H_STATUS_GEN_ERR;
     }
     return STTS22H_STATUS_OK;
 }
-
