@@ -37,6 +37,28 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
     return STTS22H_STATUS_OK;
 }
 
+STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean){
+    if(hstts == NULL){
+        return STTS22H_STATUS_ERR_NULL;
+    }
+    if(opt_mode == hstts->opt_mode && mean == hstts->mean){
+        return STTS22H_STATUS_OK;
+    } 
+
+    uint8_t data = STTS22H_CTRL_CONSTANT;
+    STTS22H_Status status;
+    status = write_register(STTS22H_REG_CTRL, &data, 1);
+    
+    data = STTS22H_CTRL_VALUE(opt_mode, mean);
+    status = write_register(STTS22H_REG_CTRL, &data, 1);
+
+    if(status == STTS22H_STATUS_OK){
+        hstts->opt_mode = opt_mode;
+        hstts->mean = mean;
+    }
+    return status;
+}
+
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
     bool result = true;
     result &= HAL_I2C_Mem_Write(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
