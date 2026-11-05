@@ -3,8 +3,6 @@
 
 #include <main.h>
 
-#define STTS22H_TEMPERATURE_LIMIT(temp) (uint8_t ((temp / 0.64F) + 63))
-
 #define STTS22H_ADDR_I2C (0x70)
 #define STTS22H_IC2 (hi2c3)
 

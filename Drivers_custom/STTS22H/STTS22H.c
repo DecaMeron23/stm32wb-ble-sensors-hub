@@ -1,5 +1,4 @@
 #include "STTS22H.h"
-#include "stdbool.h"
 extern I2C_HandleTypeDef STTS22H_IC2;
 
 #define STTS22H_REG_WHOAMI              (0x01)
@@ -76,12 +75,14 @@ STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp){
 
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
     bool result = true;
+    uint8_t result = 1;
     result &= HAL_I2C_Mem_Write(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
     return (result ? STTS22H_STATUS_OK : STTS22H_STATUS_I2C_ERR);
 }
 
 static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
     bool result = true;
+    uint8_t result = 1;
     result &= HAL_I2C_Mem_Read(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
     return (result ? STTS22H_STATUS_OK : STTS22H_STATUS_I2C_ERR);
 }
