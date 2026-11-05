@@ -9,15 +9,20 @@ extern I2C_HandleTypeDef STTS22H_IC2;
 #define STTS22H_REG_TEMP_L_OUT          (0x06)
 #define STTS22H_REG_TEMP_H_OUT          (0x07)
 
+#define STTS22H_TEMPERATURE_LIMIT(temp) ((uint8_t) ((temp / 0.64F) + 63))
+
 #define STTS22H_CTRL_CONSTANT           (0x4A)
 #define STTS22H_CTRL_OPT(opt)           (opt == STTS22H_MODE_ONE_SHOT ? 0x01 : (opt == STTS22H_MODE_FREE_RUN ? 0x04 : 0x80))
 #define STTS22H_CTRL_AVG(mean)          (mean << 4)
 #define STTS22H_CTRL_VALUE(opt , mean)  (STTS22H_CTRL_CONSTANT | STTS22H_CTRL_OPT(opt) | STTS22H_CTRL_AVG(mean))
 
+#define STTS22H_IS_BUSY(reg_status)     (reg_status & 0x01)
+
 
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size);
 static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16_t size);
-
+static STTS22H_Status set_temp_limit(STTS22H_HandleTypeDef *hstts, uint8_t add_register, uint8_t threshold);
+static void wait_busy();
 
 STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
     if(hstts == NULL){
@@ -67,6 +72,10 @@ STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp){
     
     uint8_t p_value[2] = {0, 0};
 
+    if(hstts->opt_mode == STTS22H_MODE_ONE_SHOT){
+        wait_busy();
+    }
+
     STTS22H_Status status = read_register(STTS22H_REG_TEMP_L_OUT, p_value, 2);
 
     *temp = (int16_t)((uint16_t)(p_value[1] << 8) | p_value[0]);
@@ -85,4 +94,15 @@ static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16
     uint8_t result = 1;
     result &= HAL_I2C_Mem_Read(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
     return (result ? STTS22H_STATUS_OK : STTS22H_STATUS_I2C_ERR);
+}
+
+static void wait_busy(){
+    uint8_t data = 0;
+    read_register(STTS22H_REG_STATUS, &data, 1);
+    while (STTS22H_IS_BUSY(data)) {
+        HAL_Delay(10);
+        read_register(STTS22H_REG_STATUS, &data, 1);
+    }
+}
+
 }
