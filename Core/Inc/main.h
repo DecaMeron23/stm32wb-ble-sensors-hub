@@ -60,6 +60,9 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define STTS22H_ALERT_Pin GPIO_PIN_1
+#define STTS22H_ALERT_GPIO_Port GPIOE
+#define STTS22H_ALERT_EXTI_IRQn EXTI1_IRQn
 
 /* USER CODE BEGIN Private defines */
 
