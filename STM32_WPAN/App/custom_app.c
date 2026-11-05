@@ -55,7 +55,7 @@ typedef struct
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
-#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5);      // [s]
+#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000);      // [s]
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -251,7 +251,7 @@ void Custom_APP_Init(void)
   /* USER CODE BEGIN CUSTOM_APP_Init */
   Custom_App_Context.hw_ts_timeout_acc = CUSTOM_APP_DEFAULT_TIMEOUT_ACC;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
-  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_Repeated, NULL);
+  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_SingleShot, NULL);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -271,7 +271,7 @@ void HW_TS_RTC_Int_AppNot(uint32_t TimerProcessID, uint8_t TimerID, HW_TS_pTimer
 
 static void Custom_App_AccRead(){
   // Get DATA
-  uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , 0xAA};
+  uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , HAL_GetTick() / 1000 & 0xFF};
 
   // Send DATA
   Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);

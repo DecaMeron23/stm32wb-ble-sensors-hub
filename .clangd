@@ -1,5 +1,4 @@
 CompileFlags:
   CompilationDatabase: build/Debug
-
 Completion:
   HeaderInsertion: Never
