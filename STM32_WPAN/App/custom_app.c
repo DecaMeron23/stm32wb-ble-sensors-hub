@@ -179,7 +179,6 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
       Custom_App_Context.Acc_Notification_Status = ENABLE;
-      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_acc);
       HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
       /* USER CODE END CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
       break;
