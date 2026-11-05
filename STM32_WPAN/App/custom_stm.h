@@ -40,6 +40,7 @@ typedef enum
   /* SENSORS */
   CUSTOM_STM_TEMP,
   CUSTOM_STM_ACC,
+  CUSTOM_STM_CTRL_TEMP,
 } Custom_STM_Char_Opcode_t;
 
 typedef enum
@@ -57,6 +58,8 @@ typedef enum
   CUSTOM_STM_ACC_READ_EVT,
   CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT,
   CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT,
+  /* CTRL_TEMP */
+  CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT,
   CUSTOM_STM_NOTIFICATION_COMPLETE_EVT,
 
   CUSTOM_STM_BOOT_REQUEST_EVT
@@ -86,6 +89,7 @@ extern uint16_t SizeUptime;
 extern uint16_t SizeDatetime;
 extern uint16_t SizeTemp;
 extern uint16_t SizeAcc;
+extern uint16_t SizeCtrl_Temp;
 
 /* USER CODE BEGIN EC */
 

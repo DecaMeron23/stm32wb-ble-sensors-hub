@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "STTS22H.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +46,6 @@ IPCC_HandleTypeDef hipcc;
 RTC_HandleTypeDef hrtc;
 
 /* USER CODE BEGIN PV */
-STTS22H_HandleTypeDef hstts = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,7 +106,6 @@ int main(void)
   MX_I2C3_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
-  STTS22H_Init(&hstts);
   /* USER CODE END 2 */
 
   /* Init code for STM32_WPAN */

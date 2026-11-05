@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-// #include "helpers/helpers.h"
+#include "STTS22H/STTS22H.h"
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE END Includes */
 
@@ -45,7 +45,9 @@ typedef struct
   uint32_t              hw_ts_timeout_acc;        // [ms]
 
   uint8_t               hw_ts_id_timer_temp;
-  uint32_t              hw_ts_timeout_temp;        // [ms]
+  uint32_t              hw_ts_timeout_temp;       // [ms]
+
+  STTS22H_HandleTypeDef hstts;
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -196,6 +198,12 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE END CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
       break;
 
+    case CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
+
+      /* USER CODE END CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
+      break;
+
     case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
       /* USER CODE BEGIN CUSTOM_STM_NOTIFICATION_COMPLETE_EVT */
 
@@ -261,6 +269,9 @@ void Custom_APP_Init(void)
   Custom_App_Context.hw_ts_timeout_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, 0 , Custom_App_TempRead);
   HW_TS_Create(CFG_TASK_READ_TEMP_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_temp, hw_ts_SingleShot, NULL);
+
+  STTS22H_Init(&Custom_App_Context.hstts);
+  STTS22H_ChangeMode(&Custom_App_Context.hstts, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -292,10 +303,13 @@ static void Custom_App_AccRead(){
 
 static void Custom_App_TempRead(){
   // Get DATA
-  uint8_t dummy_data_temp[2] = {0xFF , HAL_GetTick() / 1000 & 0xFF};
+  int16_t temp = 0;
+  STTS22H_ReadTemp(&Custom_App_Context.hstts, &temp);
+  uint16_t raw = (uint16_t)temp;
+  uint8_t data[2] = {raw & 0xFF , (raw >> 8) & 0xFF};
 
   // Send DATA
-  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, dummy_data_temp);
+  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, data);
 
   if(Custom_App_Context.Temp_Notification_Status == ENABLE){
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
