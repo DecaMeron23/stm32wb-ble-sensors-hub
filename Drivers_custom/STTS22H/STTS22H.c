@@ -82,15 +82,29 @@ STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp){
     return status;
 }
 
+STTS22H_Status STTS22H_SetTempHLimit(STTS22H_HandleTypeDef *hstts , int8_t temp_h){
+    return set_temp_limit(hstts, STTS22H_REG_TEMP_H_LIMIT, STTS22H_TEMPERATURE_LIMIT(temp_h));
+}
+
+STTS22H_Status STTS22H_DeleteTempHLimit(STTS22H_HandleTypeDef *hstts){
+    return set_temp_limit(hstts, STTS22H_REG_TEMP_H_LIMIT, 0);
+}
+
+STTS22H_Status STTS22H_SetTempLLimit(STTS22H_HandleTypeDef *hstts , int8_t temp_l){
+    return set_temp_limit(hstts, STTS22H_REG_TEMP_L_LIMIT, STTS22H_TEMPERATURE_LIMIT(temp_l));
+}
+
+STTS22H_Status STTS22H_DeleteTempLLimit(STTS22H_HandleTypeDef *hstts){
+    return set_temp_limit(hstts, STTS22H_REG_TEMP_L_LIMIT, 0);
+}
+
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
-    bool result = true;
     uint8_t result = 1;
     result &= HAL_I2C_Mem_Write(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
     return (result ? STTS22H_STATUS_OK : STTS22H_STATUS_I2C_ERR);
 }
 
 static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16_t size){
-    bool result = true;
     uint8_t result = 1;
     result &= HAL_I2C_Mem_Read(&STTS22H_IC2, STTS22H_ADDR_I2C, mem_address, 1, pData, size, HAL_MAX_DELAY) == HAL_OK;
     return (result ? STTS22H_STATUS_OK : STTS22H_STATUS_I2C_ERR);
@@ -105,4 +119,10 @@ static void wait_busy(){
     }
 }
 
+static STTS22H_Status set_temp_limit(STTS22H_HandleTypeDef *hstts, uint8_t add_register, uint8_t threshold){
+    if(hstts == NULL){
+        return STTS22H_STATUS_NULL_ERR;
+    }
+    STTS22H_Status status = write_register(add_register, &threshold, 1);
+    return status;
 }
