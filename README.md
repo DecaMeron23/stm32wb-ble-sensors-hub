@@ -45,3 +45,6 @@ Il sensore di temperatura, STTS22H, a bordo della STM32WB5MM-DK presenta diverse
 
 La comunicazione è effettuata tramite la periferica `I2C`.
 Nel caso in cui si volesse ricevere dei `ALERT` in caso di superamento (o abbassamento) della temperatura rispetto alle soglie, è necessario implementare la callback: `HAL_GPIO_EXTI_Callback` per il PIN `PE1`
+
+### Protocollo di comando del sensore
+![protocollo comando senosre di temperatura](docs/img/ble_temp_write.png)
