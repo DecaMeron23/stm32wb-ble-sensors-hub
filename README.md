@@ -32,6 +32,16 @@ La board: STM32WB5MM-DK presenta diversi moduli, tra cui:
 Obiettivi: 
 - [x] Implementazione del servizio INFO
 - [x] Implementazione del servizio SENSORS
-- [ ] Driver sensore di Temperatura
+- [x] Driver sensore di Temperatura
 - [ ] Driver Accelerometro
 - [ ] Driver Memoria
+
+
+## Drivers: Sensore di Temperatura
+Il sensore di temperatura, STTS22H, a bordo della STM32WB5MM-DK presenta diverse modalità di misura:
+1. `Single Shot Mode`: permette di risparmiare la carica della batteria effettuando una misurazione su richiesta per poi porsi in una modalità _LOW Power_.  
+1. `Low ODR Mode`: modalità che effettua misurazioni a un `Output Data Rate` (`ODR`) pari a 1 Hz. 
+1. `Freerun Mode`: modalità con cui si possono scegliere a che frequenza campionare, ovvero: 25 Hz, 50 Hz, 100 Hz e 200 Hz.
+
+La comunicazione è effettuata tramite la periferica `I2C`.
+Nel caso in cui si volesse ricevere dei `ALERT` in caso di superamento (o abbassamento) della temperatura rispetto alle soglie, è necessario implementare la callback: `HAL_GPIO_EXTI_Callback` per il PIN `PE1`
