@@ -91,7 +91,8 @@ static void Custom_Acc_Update_Char(void);
 static void Custom_Acc_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
-
+static void Custom_App_AccReadISR();
+static void Custom_App_AccRead();
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -170,10 +171,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_ACC_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
-      //TODO READ accelometer
-      uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , 0xAA};
-      Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
-
+      Custom_App_AccRead();
       /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
       break;
 
@@ -253,7 +251,21 @@ void Custom_APP_Init(void)
 }
 
 /* USER CODE BEGIN FD */
+__USED static void Custom_App_AccReadISR(){
+  //TODO
+}
 
+static void Custom_App_AccRead(){
+  // Get DATA
+  uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , 0xAA};
+
+  // Send DATA
+  Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
+
+  if(Custom_App_Context.Acc_Notification_Status == ENABLE){
+    // PREPARE NEXT MEASURE
+  }
+}
 /* USER CODE END FD */
 
 /*************************************************************
