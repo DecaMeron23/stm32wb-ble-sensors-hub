@@ -19,13 +19,13 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "custom_app.h"
+#include "main.h"
 #include "app_common.h"
+#include "dbg_trace.h"
 #include "ble.h"
-#include "cmsis_gcc.h"
+#include "custom_app.h"
 #include "custom_stm.h"
 #include "stm32_seq.h"
-#include "stm32wbxx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -39,6 +39,7 @@ typedef struct
   /* INFO */
   /* SENSORS */
   uint8_t               Temp_Notification_Status;
+  uint8_t               Acc_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
 
   /* USER CODE END CUSTOM_APP_Context_t */
@@ -65,7 +66,7 @@ typedef struct
  * START of Section BLE_APP_CONTEXT
  */
 
-__USED static Custom_App_Context_t Custom_App_Context;
+static Custom_App_Context_t Custom_App_Context;
 
 /**
  * END of Section BLE_APP_CONTEXT
@@ -84,6 +85,10 @@ uint16_t Connection_Handle;
 static void Custom_Temp_Update_Char(void);
 
 static void Custom_Temp_Send_Notification(void);
+
+static void Custom_Acc_Update_Char(void);
+
+static void Custom_Acc_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
 
@@ -145,20 +150,43 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     /* SENSORS */
     case CUSTOM_STM_TEMP_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
-
+      // TODO READ temperature
+      uint8_t dummy_data_temp[2] = {0xFF , 0xEE};
+      Custom_STM_App_Update_Char(CUSTOM_STM_ACC_READ_EVT, dummy_data_temp);
       /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
       break;
 
     case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
-
+      Custom_App_Context.Temp_Notification_Status = ENABLE;
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
-
+      Custom_App_Context.Temp_Notification_Status = DISABLE;
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
+      break;
+
+    case CUSTOM_STM_ACC_READ_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
+      //TODO READ accelometer
+      uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , 0xAA};
+      Custom_STM_App_Update_Char(CUSTOM_STM_ACC_READ_EVT, dummy_data_acc);
+
+      /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
+      break;
+
+    case CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
+      Custom_App_Context.Acc_Notification_Status = ENABLE;
+      /* USER CODE END CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
+      break;
+
+    case CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
+      Custom_App_Context.Acc_Notification_Status = DISABLE;
+      /* USER CODE END CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
       break;
 
     case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
@@ -271,6 +299,45 @@ __USED void Custom_Temp_Send_Notification(void) /* Property Notification */
   /* USER CODE BEGIN Temp_NS_Last*/
 
   /* USER CODE END Temp_NS_Last*/
+
+  return;
+}
+
+__USED void Custom_Acc_Update_Char(void) /* Property Read */
+{
+  uint8_t updateflag = 0;
+
+  /* USER CODE BEGIN Acc_UC_1*/
+
+  /* USER CODE END Acc_UC_1*/
+
+  if (updateflag != 0)
+  {
+    Custom_STM_App_Update_Char(CUSTOM_STM_ACC, (uint8_t *)UpdateCharData);
+  }
+
+  /* USER CODE BEGIN Acc_UC_Last*/
+
+  /* USER CODE END Acc_UC_Last*/
+  return;
+}
+
+__USED void Custom_Acc_Send_Notification(void) /* Property Notification */
+{
+  uint8_t updateflag = 0;
+
+  /* USER CODE BEGIN Acc_NS_1*/
+
+  /* USER CODE END Acc_NS_1*/
+
+  if (updateflag != 0)
+  {
+    Custom_STM_App_Update_Char(CUSTOM_STM_ACC, (uint8_t *)UpdateCharData);
+  }
+
+  /* USER CODE BEGIN Acc_NS_Last*/
+
+  /* USER CODE END Acc_NS_Last*/
 
   return;
 }
