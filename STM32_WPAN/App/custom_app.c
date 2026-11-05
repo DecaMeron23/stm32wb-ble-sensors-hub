@@ -41,7 +41,8 @@ typedef struct
   uint8_t               Temp_Notification_Status;
   uint8_t               Acc_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
-  uint8_t               hw_ts_id_timer;
+  uint8_t               hw_ts_id_timer_acc;
+  uint32_t              hw_ts_timeout_acc;        // [ms]
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -53,7 +54,8 @@ typedef struct
 
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
+#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5);      // [s]
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -170,19 +172,22 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_ACC_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
-      Custom_App_AccRead();
+      UTIL_SEQ_SetTask(1 << CFG_TASK_READ_ACC_EVENT_ID, CFG_SCH_PRIO_SENSORS);
       /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
       break;
 
     case CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
       Custom_App_Context.Acc_Notification_Status = ENABLE;
+      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_acc);
+      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
       /* USER CODE END CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
       break;
 
     case CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
       Custom_App_Context.Acc_Notification_Status = DISABLE;
+      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_acc);
       /* USER CODE END CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
       break;
 
@@ -244,8 +249,9 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
+  Custom_App_Context.hw_ts_timeout_acc = CUSTOM_APP_DEFAULT_TIMEOUT_ACC;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
-  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer, hw_ts_Repeated, NULL);
+  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_Repeated, NULL);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -271,7 +277,7 @@ static void Custom_App_AccRead(){
   Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
 
   if(Custom_App_Context.Acc_Notification_Status == ENABLE){
-    // PREPARE NEXT MEASURE
+    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
   }
 }
 /* USER CODE END FD */
