@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "STTS22H.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
