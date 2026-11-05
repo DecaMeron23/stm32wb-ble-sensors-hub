@@ -33,7 +33,8 @@ typedef enum{
 
 typedef enum{
     STTS22H_STATUS_OK,          // OK
-    STTS22H_STATUS_ERR_NULL,    // Tring to access to a NULL pointer
+    STTS22H_STATUS_NULL_ERR,    // Tring to access to a NULL pointer
+    STTS22H_STATUS_I2C_ERR,    // Tring to access to a NULL pointer
     STTS22H_STATUS_GEN_ERR,     // Generic Error
 }STTS22H_Status;
 
