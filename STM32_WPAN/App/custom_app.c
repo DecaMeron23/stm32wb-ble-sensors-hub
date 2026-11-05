@@ -152,7 +152,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
       // TODO READ temperature
       uint8_t dummy_data_temp[2] = {0xFF , 0xEE};
-      Custom_STM_App_Update_Char(CUSTOM_STM_ACC_READ_EVT, dummy_data_temp);
+      Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, dummy_data_temp);
       /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
       break;
 
@@ -172,7 +172,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
       //TODO READ accelometer
       uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , 0xAA};
-      Custom_STM_App_Update_Char(CUSTOM_STM_ACC_READ_EVT, dummy_data_acc);
+      Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
 
       /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
       break;
