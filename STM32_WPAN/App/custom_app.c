@@ -41,7 +41,7 @@ typedef struct
   uint8_t               Temp_Notification_Status;
   uint8_t               Acc_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
-
+  uint8_t               hw_ts_id_timer;
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -91,7 +91,6 @@ static void Custom_Acc_Update_Char(void);
 static void Custom_Acc_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
-static void Custom_App_AccReadISR();
 static void Custom_App_AccRead();
 /* USER CODE END PFP */
 
@@ -245,14 +244,23 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
-
+  UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
+  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer, hw_ts_Repeated, NULL);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
 
 /* USER CODE BEGIN FD */
-__USED static void Custom_App_AccReadISR(){
-  //TODO
+void HW_TS_RTC_Int_AppNot(uint32_t TimerProcessID, uint8_t TimerID, HW_TS_pTimerCb_t pTimerCallBack)
+{
+  if(TimerProcessID == CFG_TIM_PROC_ID_ISR){
+    if(pTimerCallBack != NULL){
+      pTimerCallBack();
+    }
+  } else {
+    UTIL_SEQ_SetTask(1 << TimerProcessID, CFG_SCH_PRIO_SENSORS);
+  }
+  return;
 }
 
 static void Custom_App_AccRead(){

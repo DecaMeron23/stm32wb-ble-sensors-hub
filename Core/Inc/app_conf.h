@@ -672,7 +672,7 @@ typedef enum
 #endif
   CFG_TASK_HCI_ASYNCH_EVT_ID,
   /* USER CODE BEGIN CFG_Task_Id_With_HCI_Cmd_t */
-
+  CFG_TASK_READ_ACC_EVENT_ID,
   /* USER CODE END CFG_Task_Id_With_HCI_Cmd_t */
   CFG_LAST_TASK_ID_WITH_HCICMD,                                               /**< Shall be LAST in the list */
 } CFG_Task_Id_With_HCI_Cmd_t;
@@ -698,7 +698,7 @@ typedef enum
 {
   CFG_SCH_PRIO_0,
   /* USER CODE BEGIN CFG_SCH_Prio_Id_t */
-
+  CFG_SCH_PRIO_SENSORS,
   /* USER CODE END CFG_SCH_Prio_Id_t */
   CFG_SCH_PRIO_NBR
 } CFG_SCH_Prio_Id_t;
