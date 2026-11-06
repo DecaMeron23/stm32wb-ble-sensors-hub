@@ -22,6 +22,8 @@ extern I2C_HandleTypeDef STTS22H_IC2;
 static STTS22H_Status write_register(uint16_t mem_address, uint8_t *pData, uint16_t size);
 static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16_t size);
 static STTS22H_Status set_temp_limit(STTS22H_HandleTypeDef *hstts, uint8_t add_register, uint8_t threshold);
+static STTS22H_Status turn_off(STTS22H_HandleTypeDef *hstts);
+static STTS22H_Status turn_on(STTS22H_HandleTypeDef *hstts);
 static void wait_busy();
 
 STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
@@ -29,6 +31,7 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
         return STTS22H_STATUS_NULL_ERR;
     }
 
+    hstts->is_on = false;
     hstts->opt_mode = STTS22H_MODE_ONE_SHOT;
     hstts->mean = STTS22H_MEAN_8;
 
@@ -43,19 +46,29 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
     return STTS22H_STATUS_OK;
 }
 
+STTS22H_Status STTS22H_TurnOnOFF(STTS22H_HandleTypeDef *hstts , bool is_on){
+    if(hstts == NULL){
+        return STTS22H_STATUS_NULL_ERR;
+    }
+    return is_on ? turn_on(hstts) : turn_off(hstts);
+}
+
 STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean){
     if(hstts == NULL){
         return STTS22H_STATUS_NULL_ERR;
     }
-    if(opt_mode == hstts->opt_mode && mean == hstts->mean){
+    if(opt_mode == hstts->opt_mode && mean == hstts->mean && hstts->is_on){
         return STTS22H_STATUS_OK;
     } 
-
-    uint8_t data = STTS22H_CTRL_CONSTANT;
     STTS22H_Status status;
-    status = write_register(STTS22H_REG_CTRL, &data, 1);
+    if(hstts->is_on){
+        status = STTS22H_TurnOnOFF(hstts, STTS22H_OFF);
+        if(status != STTS22H_STATUS_OK){
+            return status;
+        }
+    }
     
-    data = STTS22H_CTRL_VALUE(opt_mode, mean);
+    uint8_t data = STTS22H_CTRL_VALUE(opt_mode, mean);
     status = write_register(STTS22H_REG_CTRL, &data, 1);
 
     if(status == STTS22H_STATUS_OK){
@@ -134,6 +147,29 @@ static STTS22H_Status read_register(uint16_t mem_address, uint8_t *pData, uint16
 
 static STTS22H_Status set_temp_limit(STTS22H_HandleTypeDef *hstts, uint8_t add_register, uint8_t threshold){
     STTS22H_Status status = write_register(add_register, &threshold, 1);
+    return status;
+}
+
+static STTS22H_Status turn_off(STTS22H_HandleTypeDef *hstts){
+    if (!hstts->is_on){
+        return STTS22H_STATUS_OK;
+    }
+    uint8_t data = STTS22H_CTRL_CONSTANT;
+    STTS22H_Status status = write_register(STTS22H_REG_CTRL, &data, 1);
+    if(status == STTS22H_STATUS_OK){
+        hstts->is_on = STTS22H_OFF;
+    }
+    return status;
+}
+
+static STTS22H_Status turn_on(STTS22H_HandleTypeDef *hstts){
+    if (hstts->is_on){
+        return STTS22H_STATUS_OK;
+    }
+    STTS22H_Status status = STTS22H_ChangeMode(hstts , hstts->opt_mode , hstts->mean);
+    if(status == STTS22H_STATUS_OK){
+        hstts->is_on = STTS22H_ON;
+    }
     return status;
 }
 

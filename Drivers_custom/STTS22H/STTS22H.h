@@ -9,6 +9,9 @@
 
 #define STTS22H_WHO_I_AM (0xA0)
 
+#define STTS22H_OFF (false)
+#define STTS22H_ON  (true)
+
 
 typedef enum{
     STTS22H_MODE_ONE_SHOT,
@@ -45,11 +48,14 @@ typedef enum{
 }STTS22H_EventCode;
 
 typedef struct{
+    bool is_on;
     STTS22H_OperatingModes opt_mode;
     STTS22H_MEAN mean;
 }STTS22H_HandleTypeDef;
 
 STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts);
+
+STTS22H_Status STTS22H_TurnOnOFF(STTS22H_HandleTypeDef *hstts , bool is_on);
 
 STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean);
 
