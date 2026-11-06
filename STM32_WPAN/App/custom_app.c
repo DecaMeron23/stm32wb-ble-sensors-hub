@@ -102,6 +102,8 @@ static void Custom_Acc_Send_Notification(void);
 static void Custom_App_AccRead();
 static void Custom_App_TempRead();
 static void Custom_App_CtrlTemp(uint8_t *pData , uint8_t size);
+
+static uint32_t select_odr_temperature(uint8_t unit , uint8_t value);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -321,7 +323,67 @@ static void Custom_App_CtrlTemp(uint8_t* pData , uint8_t size){
   if(size != 3){
     return;
   }
-  //TODO
+  uint8_t cmd = pData[0];
+  uint8_t thl = pData[1];
+  uint8_t thh = pData[2];
+
+  Custom_App_Context.hw_ts_timeout_temp = select_odr_temperature((cmd >> 6) & 0x01 , (cmd >> 3) & 0x38);
+
+  STTS22H_ChangeMode(&Custom_App_Context.hstts, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
+  
+  if(Custom_App_Context.Temp_Notification_Status == ENABLE){
+    STTS22H_TurnOnOFF(&Custom_App_Context.hstts, STTS22H_ON);
+    HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
+    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
+  }
+
+  // Threshold
+  if(cmd & 0x4){ // campi modificati 
+    if(cmd & 0x2){
+      STTS22H_SetTempLLimit(&Custom_App_Context.hstts, thl);
+    } else {
+      STTS22H_DeleteTempLLimit(&Custom_App_Context.hstts);
+    }
+    
+    if(cmd & 0x1){
+      STTS22H_SetTempHLimit(&Custom_App_Context.hstts, thh);
+    } else {
+      STTS22H_DeleteTempHLimit(&Custom_App_Context.hstts);
+    }
+  }
+
+
+}
+
+static uint32_t select_odr_temperature(uint8_t unit , uint8_t value){
+  uint32_t m_seconds;
+  switch (value) {
+    case 0x0:
+      m_seconds = 1 * 1000U; // [ms]
+      break;
+    case 0x1:
+      m_seconds = 2 * 1000U; // [ms]
+      break;
+    case 0x2:
+      m_seconds = 5 * 1000U; // [ms]
+      break;
+    case 0x3:
+      m_seconds = 10 * 1000U; // [ms]
+      break;
+    case 0x4:
+      m_seconds = 15 * 1000U; // [ms]
+      break;
+    case 0x5:
+      m_seconds = 20 * 1000U; // [ms]
+      break;
+    case 0x6:
+      m_seconds = 30 * 1000U; // [ms]
+      break;
+    case 0x7:
+      m_seconds = 45 * 1000U; // [ms]
+      break;
+  }
+  return unit == 0x00 ? m_seconds : (m_seconds * 60U);
 }
 /* USER CODE END FD */
 
