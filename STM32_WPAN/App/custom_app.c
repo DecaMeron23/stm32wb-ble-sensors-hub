@@ -320,39 +320,7 @@ static void Custom_App_TempRead(){
 }
 
 static void Custom_App_CtrlTemp(uint8_t* pData , uint8_t size){
-  if(size != 3){
-    return;
-  }
-  uint8_t cmd = pData[0];
-  uint8_t thl = pData[1];
-  uint8_t thh = pData[2];
-
-  Custom_App_Context.hw_ts_timeout_temp = select_odr_temperature((cmd >> 6) & 0x01 , (cmd >> 3) & 0x38);
-
-  STTS22H_ChangeMode(&Custom_App_Context.hstts, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
   
-  if(Custom_App_Context.Temp_Notification_Status == ENABLE){
-    // STTS22H_TurnOnOFF(&Custom_App_Context.hstts, STTS22H_ON);
-    HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
-    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
-  }
-
-  // Threshold
-  if(cmd & 0x4){ // campi modificati 
-    if(cmd & 0x2){
-      STTS22H_SetTempLLimit(&Custom_App_Context.hstts, thl);
-    } else {
-      STTS22H_DeleteTempLLimit(&Custom_App_Context.hstts);
-    }
-    
-    if(cmd & 0x1){
-      STTS22H_SetTempHLimit(&Custom_App_Context.hstts, thh);
-    } else {
-      STTS22H_DeleteTempHLimit(&Custom_App_Context.hstts);
-    }
-  }
-
-
 }
 
 static uint32_t select_odr_temperature(uint8_t unit , uint8_t value){
