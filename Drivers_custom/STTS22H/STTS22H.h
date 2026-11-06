@@ -36,8 +36,9 @@ typedef enum{
 typedef enum{
     STTS22H_STATUS_OK,          // OK
     STTS22H_STATUS_NULL_ERR,    // Tring to access to a NULL pointer
-    STTS22H_STATUS_I2C_ERR,    // Tring to access to a NULL pointer
-    STTS22H_STATUS_GEN_ERR,     // Generic Error
+    STTS22H_STATUS_I2C_ERR,     // Comunication error
+    STTS22H_STATUS_OFF_ERR,     // Sensor are off
+    STTS22H_STATUS_GEN_ERR,     // Generic error
 }STTS22H_Status;
 
 typedef enum{
@@ -53,14 +54,26 @@ typedef struct{
     STTS22H_MEAN mean;
 }STTS22H_HandleTypeDef;
 
+// INIZIALIZZA
 STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts);
 
-STTS22H_Status STTS22H_TurnOnOFF(STTS22H_HandleTypeDef *hstts , bool is_on);
+// VERIFICA SE ACCESO
+STTS22H_Status STTS22H_IsOn(STTS22H_HandleTypeDef *hstts , bool *is_on);
 
+// SPEGNE
+STTS22H_Status STTS22H_TurnOFF(STTS22H_HandleTypeDef *hstts);
+
+// ACCENDE
+STTS22H_Status STTS22H_TurnON(STTS22H_HandleTypeDef *hstts);
+
+// NON ACCENDE IL DISPOSTIVO SE ERA SPENTO
 STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean);
 
+// ?
 STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp);
 
+
+// OK
 STTS22H_Status STTS22H_SetTempHLimit(STTS22H_HandleTypeDef *hstts , int8_t temp_h);
 
 STTS22H_Status STTS22H_DeleteTempHLimit(STTS22H_HandleTypeDef *hstts);

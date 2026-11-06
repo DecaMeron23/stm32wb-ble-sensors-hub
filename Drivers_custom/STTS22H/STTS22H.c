@@ -46,43 +46,61 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
     return STTS22H_STATUS_OK;
 }
 
-STTS22H_Status STTS22H_TurnOnOFF(STTS22H_HandleTypeDef *hstts , bool is_on){
+STTS22H_Status STTS22H_IsOn(STTS22H_HandleTypeDef *hstts , bool *is_on){
     if(hstts == NULL){
         return STTS22H_STATUS_NULL_ERR;
     }
-    return is_on ? turn_on(hstts) : turn_off(hstts);
+    *is_on = hstts->is_on;
+    return STTS22H_STATUS_OK; 
+}
+
+STTS22H_Status STTS22H_TurnOFF(STTS22H_HandleTypeDef *hstts){
+    if(hstts == NULL){
+        return STTS22H_STATUS_NULL_ERR;
+    }
+    STTS22H_Status status = turn_off(hstts);
+    if(status == STTS22H_STATUS_OK){
+        hstts->is_on = STTS22H_OFF;
+    }
+    return status;
+}
+
+STTS22H_Status STTS22H_TurnON(STTS22H_HandleTypeDef *hstts){
+    if(hstts == NULL){
+        return STTS22H_STATUS_NULL_ERR;
+    }
+    STTS22H_Status status = turn_on(hstts);
+    if(status == STTS22H_STATUS_OK){
+        hstts->is_on = STTS22H_ON;
+    }
+    return status;
 }
 
 STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean){
     if(hstts == NULL){
         return STTS22H_STATUS_NULL_ERR;
     }
-    if(opt_mode == hstts->opt_mode && mean == hstts->mean && hstts->is_on){
-        return STTS22H_STATUS_OK;
-    } 
-    STTS22H_Status status;
-    if(hstts->is_on){
-        status = STTS22H_TurnOnOFF(hstts, STTS22H_OFF);
-        if(status != STTS22H_STATUS_OK){
-            return status;
-        }
-    }
+    hstts->opt_mode = opt_mode;
+    hstts->mean = mean;
     
-    uint8_t data = STTS22H_CTRL_VALUE(opt_mode, mean);
-    status = write_register(STTS22H_REG_CTRL, &data, 1);
-
-    if(status == STTS22H_STATUS_OK){
-        hstts->opt_mode = opt_mode;
-        hstts->mean = mean;
+    STTS22H_Status status = STTS22H_STATUS_OK;
+    if(hstts->is_on){
+        turn_off(hstts);
+        uint8_t data = STTS22H_CTRL_VALUE(opt_mode, mean);
+        status = write_register(STTS22H_REG_CTRL, &data, 1);
     }
-    return status;
+    return  status;
 }
 
 STTS22H_Status STTS22H_ReadTemp(STTS22H_HandleTypeDef *hstts , int16_t *temp){
     if(hstts == NULL || temp == NULL){
         return STTS22H_STATUS_NULL_ERR;
     }
-    
+    if(!hstts->is_on){
+        *temp = 0xFF; 
+        return STTS22H_STATUS_OFF_ERR;
+    }
+
     uint8_t p_value[2] = {0, 0};
 
     if(hstts->opt_mode == STTS22H_MODE_ONE_SHOT){
@@ -155,22 +173,14 @@ static STTS22H_Status turn_off(STTS22H_HandleTypeDef *hstts){
         return STTS22H_STATUS_OK;
     }
     uint8_t data = STTS22H_CTRL_CONSTANT;
-    STTS22H_Status status = write_register(STTS22H_REG_CTRL, &data, 1);
-    if(status == STTS22H_STATUS_OK){
-        hstts->is_on = STTS22H_OFF;
-    }
-    return status;
+    return write_register(STTS22H_REG_CTRL, &data, 1);
 }
 
 static STTS22H_Status turn_on(STTS22H_HandleTypeDef *hstts){
     if (hstts->is_on){
         return STTS22H_STATUS_OK;
     }
-    STTS22H_Status status = STTS22H_ChangeMode(hstts , hstts->opt_mode , hstts->mean);
-    if(status == STTS22H_STATUS_OK){
-        hstts->is_on = STTS22H_ON;
-    }
-    return status;
+    return STTS22H_ChangeMode(hstts , hstts->opt_mode , hstts->mean);
 }
 
 static void wait_busy(){

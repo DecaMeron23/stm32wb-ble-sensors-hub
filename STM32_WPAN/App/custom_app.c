@@ -332,7 +332,7 @@ static void Custom_App_CtrlTemp(uint8_t* pData , uint8_t size){
   STTS22H_ChangeMode(&Custom_App_Context.hstts, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
   
   if(Custom_App_Context.Temp_Notification_Status == ENABLE){
-    STTS22H_TurnOnOFF(&Custom_App_Context.hstts, STTS22H_ON);
+    // STTS22H_TurnOnOFF(&Custom_App_Context.hstts, STTS22H_ON);
     HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
   }
