@@ -101,6 +101,7 @@ static void Custom_Acc_Send_Notification(void);
 /* USER CODE BEGIN PFP */
 static void Custom_App_AccRead();
 static void Custom_App_TempRead();
+static void Custom_App_CtrlTemp(uint8_t *pData , uint8_t size);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -200,7 +201,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT:
       /* USER CODE BEGIN CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
-
+      Custom_App_CtrlTemp(pNotification->DataTransfered.pPayload , pNotification->DataTransfered.Length);
       /* USER CODE END CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
       break;
 
@@ -314,6 +315,13 @@ static void Custom_App_TempRead(){
   if(Custom_App_Context.Temp_Notification_Status == ENABLE){
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
   }
+}
+
+static void Custom_App_CtrlTemp(uint8_t* pData , uint8_t size){
+  if(size != 3){
+    return;
+  }
+  //TODO
 }
 /* USER CODE END FD */
 
