@@ -46,6 +46,8 @@ typedef struct
 
   uint8_t               hw_ts_id_timer_temp;
   uint32_t              hw_ts_timeout_temp;        // [ms]
+
+  STTS22H_HandleTypeDef stts22_handler;
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -292,10 +294,14 @@ static void Custom_App_AccRead(){
 
 static void Custom_App_TempRead(){
   // Get DATA
-  uint8_t dummy_data_temp[2] = {0xFF , HAL_GetTick() / 1000 & 0xFF};
+  int16_t temp = 0;
+  STTS22H_ChangeMode(&Custom_App_Context.stts22_handler, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
+  STTS22H_ReadTemp(&Custom_App_Context.stts22_handler, &temp);
+  uint16_t raw = (uint16_t) temp;
+  uint8_t value[2] = {raw & 0xFF , (raw >> 8) & 0XFF};
 
   // Send DATA
-  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, dummy_data_temp);
+  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, value);
 
   if(Custom_App_Context.Temp_Notification_Status == ENABLE){
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
