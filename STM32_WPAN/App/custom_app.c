@@ -101,6 +101,9 @@ static void Custom_Acc_Send_Notification(void);
 /* USER CODE BEGIN PFP */
 static void Custom_App_AccRead();
 static void Custom_App_TempRead();
+
+static void Custom_App_TempControl(uint8_t *data , uint8_t size);
+static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -200,7 +203,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT:
       /* USER CODE BEGIN CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
-
+      Custom_App_TempControl(pNotification->DataTransfered.pPayload , pNotification->DataTransfered.Length);
       /* USER CODE END CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
       break;
 
@@ -313,6 +316,76 @@ static void Custom_App_TempRead(){
     HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
   }
 }
+
+static void Custom_App_TempControl(uint8_t *data , uint8_t size){
+  if(data == NULL || size != 3){
+    return;
+  }
+  uint8_t cmd = data[0];
+  int8_t thl = data[1];
+  int8_t thh = data[2];
+
+  if(cmd & 0x80){ // Change ODR
+    Custom_App_Context.hw_ts_timeout_temp = get_timeout_millis_temp( (cmd >> 6) & 0x01 , (cmd >> 3) & 0x07);
+  }
+  if(cmd & 0x04){ // Change Threshold
+    if(cmd & 0x02){
+      STTS22H_SetTempLLimit(&Custom_App_Context.stts22_handler, thl);
+    } else {
+      STTS22H_DeleteTempLLimit(&Custom_App_Context.stts22_handler);
+    }
+
+    if(cmd & 0x01){
+      STTS22H_SetTempHLimit(&Custom_App_Context.stts22_handler, thh);
+    } else {
+      STTS22H_DeleteTempHLimit(&Custom_App_Context.stts22_handler);
+    }
+  }
+}
+
+static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value){
+  uint32_t m_seconds = 1000;
+  switch (value) {
+    case 1:
+      m_seconds *= 2;
+      break;
+    case 2:
+      m_seconds *= 5;
+      break;
+    case 3:
+      m_seconds *= 10;
+      break;
+    case 4:
+      m_seconds *= 15;
+      break;
+    case 5:
+      m_seconds *= 20;
+      break;
+    case 6:
+      m_seconds *= 30;
+      break;
+    case 7:
+      m_seconds *= 45;
+      break;
+    default:
+      m_seconds *= 1;
+      break;
+  }
+  return unit == 0x00 ? m_seconds : (m_seconds * 60);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+  if(GPIO_Pin == STTS22H_ALERT_Pin){
+    uint8_t data = 0;
+    STTS22H_ReadEvent(&Custom_App_Context.stts22_handler, &data);
+    if (data == STTS22H_EVENT_OVER_THH){
+      // TODO
+    } else if (data == STTS22H_EVENT_UNDER_THL){
+      // TODO
+    }
+  }
+}
+
 /* USER CODE END FD */
 
 /*************************************************************
