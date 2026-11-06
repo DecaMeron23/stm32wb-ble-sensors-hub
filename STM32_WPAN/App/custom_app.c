@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-// #include "helpers/helpers.h"
+#include "STTS22H/STTS22H.h"
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE END Includes */
 
