@@ -2,6 +2,7 @@
 #define __STTS22H_H
 
 #include <main.h>
+#include "stdbool.h"
 
 #define STTS22H_ADDR_I2C (0x70)
 #define STTS22H_IC2 (hi2c3)
