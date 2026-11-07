@@ -172,7 +172,8 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     /* SENSORS */
     case CUSTOM_STM_TEMP_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
-      UTIL_SEQ_SetTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
+      Custom_App_TempRead();
+      // UTIL_SEQ_SetTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
       /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
       break;
 
@@ -192,7 +193,8 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_ACC_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
-      UTIL_SEQ_SetTask(1 << CFG_TASK_READ_ACC_EVENT_ID, CFG_SCH_PRIO_SENSORS);
+      Custom_App_AccRead();
+      // UTIL_SEQ_SetTask(1 << CFG_TASK_READ_ACC_EVENT_ID, CFG_SCH_PRIO_SENSORS);
       /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
       break;
 
