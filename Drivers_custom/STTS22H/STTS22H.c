@@ -30,7 +30,8 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
     }
 
     hstts->opt_mode = STTS22H_MODE_ONE_SHOT;
-    hstts->mean = STTS22H_MEAN_8;
+    hstts->mean = STTS22H_MEAN_1; // temporaneo
+    STTS22H_ChangeMode(hstts, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
 
     uint8_t who_i_am = 0;
     STTS22H_Status status = read_register(STTS22H_REG_WHOAMI, &who_i_am, 1);
@@ -46,9 +47,6 @@ STTS22H_Status STTS22H_Init(STTS22H_HandleTypeDef *hstts){
 STTS22H_Status STTS22H_ChangeMode(STTS22H_HandleTypeDef *hstts , STTS22H_OperatingModes opt_mode , STTS22H_MEAN mean){
     if(hstts == NULL){
         return STTS22H_STATUS_NULL_ERR;
-    }
-    if(opt_mode == hstts->opt_mode && mean == hstts->mean){
-        return STTS22H_STATUS_OK;
     } 
 
     uint8_t data = STTS22H_CTRL_CONSTANT;
