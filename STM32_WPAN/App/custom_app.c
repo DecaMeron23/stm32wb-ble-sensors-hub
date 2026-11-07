@@ -390,6 +390,8 @@ static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value){
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin == STTS22H_ALERT_Pin){
     uint8_t data = 0;
+    int16_t temp = 0;
+    STTS22H_ReadTemp(&Custom_App_Context.stts22_handler, &temp);
     STTS22H_ReadEvent(&Custom_App_Context.stts22_handler, &data);
     if (data == STTS22H_EVENT_OVER_THH){
       // TODO
