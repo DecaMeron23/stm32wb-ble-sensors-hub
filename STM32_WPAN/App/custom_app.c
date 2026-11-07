@@ -59,14 +59,24 @@ typedef struct
 
 /* Private defines ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
-#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000);      // [ms]
-#define CUSTOM_APP_DEFAULT_TIMEOUT_TEMP (5000);      // [ms]
+#define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000)      // [ms]
+#define CUSTOM_APP_DEFAULT_TIMEOUT_TEMP (5000)      // [ms]
+
+// COMAND WRITE TEMPERATURE DEFINIE
+#define CUSTOM_APP_CMD_TEMP_CHANGE_ODR        (0x80)
+#define CUSTOM_APP_CMD_TEMP_UNIT_ODR_SECONDS  (0x00)
+#define CUSTOM_APP_CMD_TEMP_CHANGE_THRESHOLD  (0x04)
+#define CUSTOM_APP_CMD_TEMP_CHANGE_THL_ON     (0x02)
+#define CUSTOM_APP_CMD_TEMP_CHANGE_THH_ON     (0x01)
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
 
+// COMAND WRITE TEMPERATURE MACRO
+#define CUSTOM_APP_CMD_TEMP_UNIT_ODR(cmd)           ((cmd >> 6) & 0x01)
+#define CUSTOM_APP_CMD_TEMP_VALUE_ODR(cmd)          ((cmd >> 3) & 0x07)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -162,7 +172,6 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     /* SENSORS */
     case CUSTOM_STM_TEMP_READ_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
-      // TODO READ temperature
       UTIL_SEQ_SetTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
       /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
       break;
@@ -325,17 +334,19 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
   int8_t thl = data[1];
   int8_t thh = data[2];
 
-  if(cmd & 0x80){ // Change ODR
-    Custom_App_Context.hw_ts_timeout_temp = get_timeout_millis_temp( (cmd >> 6) & 0x01 , (cmd >> 3) & 0x07);
+  if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_ODR){ // Change ODR
+    Custom_App_Context.hw_ts_timeout_temp = get_timeout_millis_temp(
+                                                CUSTOM_APP_CMD_TEMP_UNIT_ODR(cmd),
+                                                CUSTOM_APP_CMD_TEMP_VALUE_ODR(cmd));
   }
-  if(cmd & 0x04){ // Change Threshold
-    if(cmd & 0x02){
+  if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THRESHOLD){ // Change Threshold
+    if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THL_ON){
       STTS22H_SetTempLLimit(&Custom_App_Context.stts22_handler, thl);
     } else {
       STTS22H_DeleteTempLLimit(&Custom_App_Context.stts22_handler);
     }
 
-    if(cmd & 0x01){
+    if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THH_ON){
       STTS22H_SetTempHLimit(&Custom_App_Context.stts22_handler, thh);
     } else {
       STTS22H_DeleteTempHLimit(&Custom_App_Context.stts22_handler);
@@ -371,7 +382,7 @@ static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value){
       m_seconds *= 1;
       break;
   }
-  return unit == 0x00 ? m_seconds : (m_seconds * 60);
+  return unit == CUSTOM_APP_CMD_TEMP_UNIT_ODR_SECONDS ? m_seconds : (m_seconds * 60);
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
