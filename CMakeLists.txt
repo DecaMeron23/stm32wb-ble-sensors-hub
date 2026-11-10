@@ -46,6 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Drivers_custom/STTS22H/STTS22H.c
+    Drivers_custom/temperature_sensor/temperature.c
 )
 
 # Add include paths

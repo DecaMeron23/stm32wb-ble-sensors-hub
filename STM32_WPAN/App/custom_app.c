@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "STTS22H/STTS22H.h"
+#include "temperature_sensor/temperature.h"
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE END Includes */
 
@@ -47,7 +47,7 @@ typedef struct
   uint8_t               hw_ts_id_timer_temp;
   uint32_t              hw_ts_timeout_temp;        // [ms]
 
-  STTS22H_HandleTypeDef stts22_handler;
+  Temperature_TypeDef   temperature_sensor;
   /* USER CODE END CUSTOM_APP_Context_t */
 
   uint16_t              ConnectionHandle;
@@ -180,6 +180,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = ENABLE;
+      Temperature_StartPeriodicMeasure(&Custom_App_Context.temperature_sensor, Custom_App_Context.hw_ts_timeout_temp);
       HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       break;
@@ -187,6 +188,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = DISABLE;
+      Temperature_StopPeriodicMeasure(&Custom_App_Context.temperature_sensor);
       HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       break;
@@ -283,6 +285,8 @@ void Custom_APP_Init(void)
   Custom_App_Context.hw_ts_timeout_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, 0 , Custom_App_TempRead);
   HW_TS_Create(CFG_TASK_READ_TEMP_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_temp, hw_ts_SingleShot, NULL);
+
+  Temperature_Init(&Custom_App_Context.temperature_sensor);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
@@ -315,8 +319,7 @@ static void Custom_App_AccRead(){
 static void Custom_App_TempRead(){
   // Get DATA
   int16_t temp = 0;
-  STTS22H_ChangeMode(&Custom_App_Context.stts22_handler, STTS22H_MODE_ONE_SHOT, STTS22H_MEAN_8);
-  STTS22H_ReadTemp(&Custom_App_Context.stts22_handler, &temp);
+  Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
   uint16_t raw = (uint16_t) temp;
   uint8_t value[2] = {raw & 0xFF , (raw >> 8) & 0XFF};
 
@@ -343,15 +346,15 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
   }
   if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THRESHOLD){ // Change Threshold
     if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THL_ON){
-      STTS22H_SetTempLLimit(&Custom_App_Context.stts22_handler, thl);
+      Temperature_SetLowLimit(&Custom_App_Context.temperature_sensor, thl);
     } else {
-      STTS22H_DeleteTempLLimit(&Custom_App_Context.stts22_handler);
+      Temperature_StopLowLimit(&Custom_App_Context.temperature_sensor);
     }
 
     if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THH_ON){
-      STTS22H_SetTempHLimit(&Custom_App_Context.stts22_handler, thh);
+      Temperature_SetHighLimit(&Custom_App_Context.temperature_sensor, thh);
     } else {
-      STTS22H_DeleteTempHLimit(&Custom_App_Context.stts22_handler);
+      Temperature_StopHighLimit(&Custom_App_Context.temperature_sensor);
     }
   }
 }
@@ -391,8 +394,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin == STTS22H_ALERT_Pin){
     uint8_t data = 0;
     int16_t temp = 0;
-    STTS22H_ReadTemp(&Custom_App_Context.stts22_handler, &temp);
-    STTS22H_ReadEvent(&Custom_App_Context.stts22_handler, &data);
+    Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
+    Temperature_ReadEvent(&Custom_App_Context.temperature_sensor , &data);
     if (data == STTS22H_EVENT_OVER_THH){
       // TODO
     } else if (data == STTS22H_EVENT_UNDER_THL){
