@@ -80,6 +80,13 @@ bool Temperature_StopLowLimit(Temperature_TypeDef *htemp){
 }
 
 
+bool Temperature_ReadEvent(Temperature_TypeDef *htemp , STTS22H_EventCode *event){
+    if(htemp == NULL){
+        return false;
+    }
+    return STTS22H_STATUS_OK == STTS22H_ReadEvent(&htemp->hstts, event);
+}
+
 // PRIVATE FUNCTIONS
 
 void select_mode_and_odr(uint32_t freq , STTS22H_OperatingModes *mode , STTS22H_ODR *odr){

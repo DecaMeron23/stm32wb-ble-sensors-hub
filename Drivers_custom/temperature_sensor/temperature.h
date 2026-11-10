@@ -19,4 +19,6 @@ bool Temperature_SetLowLimit(Temperature_TypeDef *htemp, int8_t temp);
 bool Temperature_StopHighLimit(Temperature_TypeDef *htemp);
 bool Temperature_StopLowLimit(Temperature_TypeDef *htemp);
 
+bool Temperature_ReadEvent(Temperature_TypeDef *htemp , STTS22H_EventCode *event);
+
 #endif 
