@@ -14,7 +14,7 @@ extern I2C_HandleTypeDef STTS22H_IC2;
 #define STTS22H_CTRL_CONSTANT           (0x4A)
 #define STTS22H_CTRL_OPT(opt)           (opt == STTS22H_MODE_ONE_SHOT ? 0x01 : (opt == STTS22H_MODE_FREE_RUN ? 0x04 : 0x80))
 #define STTS22H_CTRL_AVG(mean)          (mean << 4)
-#define STTS22H_CTRL_VALUE(opt , mean)  (STTS22H_CTRL_CONSTANT | STTS22H_CTRL_OPT(opt) | STTS22H_CTRL_AVG(mean))
+#define STTS22H_CTRL_VALUE(opt , mean)  (STTS22H_CTRL_CONSTANT | (STTS22H_MODE_OFF == opt ? 0x00 : (STTS22H_CTRL_OPT(opt) | STTS22H_CTRL_AVG(mean))))
 
 #define STTS22H_IS_BUSY(reg_status)     (reg_status & 0x01)
 
