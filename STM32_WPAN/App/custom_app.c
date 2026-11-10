@@ -180,6 +180,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = ENABLE;
+      Temperature_StartPeriodicMeasure(&Custom_App_Context.temperature_sensor, Custom_App_Context.hw_ts_timeout_temp);
       HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
       break;
@@ -187,6 +188,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
     case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       Custom_App_Context.Temp_Notification_Status = DISABLE;
+      Temperature_StopPeriodicMeasure(&Custom_App_Context.temperature_sensor);
       HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
       /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
       break;
@@ -283,6 +285,8 @@ void Custom_APP_Init(void)
   Custom_App_Context.hw_ts_timeout_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, 0 , Custom_App_TempRead);
   HW_TS_Create(CFG_TASK_READ_TEMP_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_temp, hw_ts_SingleShot, NULL);
+
+  Temperature_Init(&Custom_App_Context.temperature_sensor);
   /* USER CODE END CUSTOM_APP_Init */
   return;
 }
