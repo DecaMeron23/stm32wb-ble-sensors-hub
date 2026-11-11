@@ -16,17 +16,19 @@ La board: STM32WB5MM-DK presenta diversi moduli, tra cui:
 ## Descrizione dello stack BLE:
 ![struttura_ble](docs/img/struttura.png)
 - INFO -- servizio in cui sono presenti le diverse informazioni della board
-- SENSORS -- servizio che gestisce i diversi sensori
+- TEMPERATURE -- servizio che gestisce il sensore di temperatura
 
 
 
-|Servizio| Caratteristica | Proprietà     |
-|--------|----------------|---------------|
-|INFO    | Uptime         | read          |
-|        | Date           | read, write   |
-|        |                |               |  
-|SENSORS | Accelerometro  | read, notify  |
-|        | Temperatura    | read, notify  |
+|Servizio       | Caratteristica | Proprietà     |
+|---------------|----------------|---------------|
+|INFO           | Uptime         | read          |
+|               | Date           | read, write   |
+|               |                |               |  
+|TEMPERATURE    | Temperatura    | read, notify  |
+|               | Control Temp   | write         |
+|               | Alert Temp     | notify        |
+|               | Control Alert  | write         |
 
 
 Obiettivi: 
