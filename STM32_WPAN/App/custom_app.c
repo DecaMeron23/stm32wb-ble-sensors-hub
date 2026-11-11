@@ -330,8 +330,12 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
     uint32_t timeout = multiply * CUSTOM_APP_CMD_TEMP_VALUE(cmd);
     if(timeout == 0){
       Custom_App_Context.timeout_notify_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
-    }else {
+    } else {
       Custom_App_Context.timeout_notify_temp = timeout;
+    }
+    if(Custom_App_Context.Temp_char_Notification_Status == ENABLE){
+      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
+      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , Custom_App_Context.timeout_notify_temp);
     }
   }
 }
