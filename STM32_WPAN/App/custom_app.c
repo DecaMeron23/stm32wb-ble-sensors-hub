@@ -350,13 +350,13 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
 }
 
 static void Custom_App_AlertTemp(){
-  uint8_t data = 0;
-  int16_t temp = 0;
-  Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
-  Temperature_ReadEvent(&Custom_App_Context.temperature_sensor , &data);
-  uint16_t raw = (uint16_t) temp;
-  uint8_t value[3] = { data, raw & 0xFF, (raw >> 8) & 0XFF};
   if(Custom_App_Context.Alt_temp_char_Notification_Status == ENABLE){
+    uint8_t data = 0;
+    int16_t temp = 0;
+    Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
+    Temperature_ReadEvent(&Custom_App_Context.temperature_sensor , &data);
+    uint16_t raw = (uint16_t) temp;
+    uint8_t value[3] = { data, raw & 0xFF, (raw >> 8) & 0XFF};
     Custom_STM_App_Update_Char(CUSTOM_STM_ALT_TEMP_CHAR, value);
   }
 }
@@ -388,7 +388,7 @@ static void Custom_App_TempAlertControl(uint8_t *data , uint8_t size){
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin == STTS22H_ALERT_Pin){
-    
+    UTIL_SEQ_SetTask(1 << CFG_TASK_ALT_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
   }
 }
 
