@@ -74,7 +74,7 @@ uint16_t SizeUptime = 1;
 uint16_t SizeDatetime = 7;
 uint16_t SizeTemp_Char = 2;
 uint16_t SizeCtrl_Temp_Char = 1;
-uint16_t SizeAlt_Temp_Char = 1;
+uint16_t SizeAlt_Temp_Char = 3;
 uint16_t SizeCtrl_Alt_Char = 3;
 
 /**
@@ -261,14 +261,20 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-
+            Notification.Custom_Evt_Opcode = CUSTOM_STM_CTRL_TEMP_CHAR_WRITE_NO_RESP_EVT;
+            Notification.DataTransfered.Length = attribute_modified->Attr_Data_Length;
+            Notification.DataTransfered.pPayload = attribute_modified->Attr_Data;
+            Custom_STM_App_Notification(&Notification);
             /* USER CODE END CUSTOM_STM_Service_2_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomCtrl_Temp_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           else if (attribute_modified->Attr_Handle == (CustomContext.CustomCtrl_Alt_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_2_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
-
+            Notification.Custom_Evt_Opcode = CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT;
+            Notification.DataTransfered.Length = attribute_modified->Attr_Data_Length;
+            Notification.DataTransfered.pPayload = attribute_modified->Attr_Data;
+            Custom_STM_App_Notification(&Notification);
             /* USER CODE END CUSTOM_STM_Service_2_Char_4_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomCtrl_Alt_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
@@ -309,7 +315,7 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /*USER CODE BEGIN CUSTOM_STM_Service_2_Char_1_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1 */
-            Notification.Custom_Evt_Opcode = CUSTOM_STM_TEMP_READ_EVT;
+            Notification.Custom_Evt_Opcode = CUSTOM_STM_TEMP_CHAR_READ_EVT;
             Custom_STM_App_Notification(&Notification);
             /*USER CODE END CUSTOM_STM_Service_2_Char_1_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1*/
             aci_gatt_allow_read(read_req->Connection_Handle);
@@ -317,17 +323,6 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
 
             /*USER CODE END CUSTOM_STM_Service_2_Char_1_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_2*/
           } /* if (read_req->Attribute_Handle == (CustomContext.CustomTemp_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
-          else if (read_req->Attribute_Handle == (CustomContext.CustomCtrl_Alt_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
-          {
-            return_value = SVCCTL_EvtAckFlowEnable;
-            /*USER CODE BEGIN CUSTOM_STM_Service_2_Char_4_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1 */
-
-            /*USER CODE END CUSTOM_STM_Service_2_Char_4_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_1*/
-            aci_gatt_allow_read(read_req->Connection_Handle);
-            /*USER CODE BEGIN CUSTOM_STM_Service_2_Char_4_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_2 */
-
-            /*USER CODE END CUSTOM_STM_Service_2_Char_4_ACI_GATT_READ_PERMIT_REQ_VSEVT_CODE_2*/
-          } /* if (read_req->Attribute_Handle == (CustomContext.CustomCtrl_Alt_CharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
           /* USER CODE BEGIN EVT_BLUE_GATT_READ_PERMIT_REQ_END */
 
           /* USER CODE END EVT_BLUE_GATT_READ_PERMIT_REQ_END */
@@ -622,9 +617,9 @@ void SVCCTL_InitCustomSvc(void)
   ret = aci_gatt_add_char(CustomContext.CustomTempHdle,
                           UUID_TYPE_128, &uuid,
                           SizeCtrl_Alt_Char,
-                          CHAR_PROP_READ | CHAR_PROP_WRITE,
+                          CHAR_PROP_WRITE,
                           ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_ATTRIBUTE_WRITE | GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
                           &(CustomContext.CustomCtrl_Alt_CharHdle));
