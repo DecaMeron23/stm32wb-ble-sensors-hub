@@ -50,3 +50,6 @@ Nel caso in cui si volesse ricevere dei `ALERT` in caso di superamento (o abbass
 
 ### Controllo del sensore di Temperatura tramite BLE
 ![alt](docs/img/ble_temp.png)
+
+### Controllo degli Alert del sensore di temperatura
+![alt](docs/img/ble_temp_alert.png)
