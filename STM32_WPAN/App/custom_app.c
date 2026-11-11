@@ -58,6 +58,9 @@ typedef struct
 /* USER CODE BEGIN PD */
 #define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000)      // [ms]
 #define CUSTOM_APP_DEFAULT_TIMEOUT_TEMP (5000)      // [ms]
+
+#define CUSTOM_APP_CMD_ALT_TEMP_OFF     (0x01)
+#define CUSTOM_APP_CMD_ALT_TEMP_ON      (0x02)
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
@@ -69,6 +72,11 @@ typedef struct
 #define CUSTOM_APP_CMD_TEMP_IS_VALID(cmd)         (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) != 0x00)
 #define CUSTOM_APP_CMD_TEMP_UNIT_MULT(cmd)        (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) == 0x01 ? (1) : (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) == 0x02 ? (60) : (60*60))) // seconds
 #define CUSTOM_APP_CMD_TEMP_VALUE(cmd)            (cmd & 0x3F) // seconds
+
+#define CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd)      ((cmd >> 4) & 0x0F)
+#define CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd)      (cmd & 0x0F)
+#define CUSTOM_APP_CMD_ALT_TEMP_CHANGE(cmd)       ((cmd == CUSTOM_APP_CMD_ALT_TEMP_OFF) || (cmd == CUSTOM_APP_CMD_ALT_TEMP_ON))
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -106,6 +114,7 @@ static void Custom_App_TempRead();
 static void Custom_App_AlertTemp();
 
 static void Custom_App_TempControl(uint8_t *data , uint8_t size);
+static void Custom_App_TempAlertControl(uint8_t *data , uint8_t size);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -202,7 +211,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     case CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT:
       /* USER CODE BEGIN CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT */
-
+      Custom_App_TempAlertControl(pNotification->DataTransfered.pPayload , pNotification->DataTransfered.Length);
       /* USER CODE END CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT */
       break;
 
@@ -349,6 +358,31 @@ static void Custom_App_AlertTemp(){
   uint8_t value[3] = { data, raw & 0xFF, (raw >> 8) & 0XFF};
   if(Custom_App_Context.Alt_temp_char_Notification_Status == ENABLE){
     Custom_STM_App_Update_Char(CUSTOM_STM_ALT_TEMP_CHAR, value);
+  }
+}
+
+static void Custom_App_TempAlertControl(uint8_t *data , uint8_t size){
+  if(data == NULL || size != 3){
+    return;
+  }
+  uint8_t cmd = data[0];
+  int8_t thl = data[1];
+  int8_t thh = data[2];
+
+  if(CUSTOM_APP_CMD_ALT_TEMP_CHANGE(CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd))) {
+    if(CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd) == CUSTOM_APP_CMD_ALT_TEMP_ON){
+      Temperature_SetLowLimit(&Custom_App_Context.temperature_sensor, thl);
+    } else {
+      Temperature_StopLowLimit(&Custom_App_Context.temperature_sensor);
+    }
+  }
+
+  if(CUSTOM_APP_CMD_ALT_TEMP_CHANGE(CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd))) {
+    if(CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd) == CUSTOM_APP_CMD_ALT_TEMP_ON){
+      Temperature_SetHighLimit(&Custom_App_Context.temperature_sensor, thh);
+    } else {
+      Temperature_StopHighLimit(&Custom_App_Context.temperature_sensor);
+    }
   }
 }
 
