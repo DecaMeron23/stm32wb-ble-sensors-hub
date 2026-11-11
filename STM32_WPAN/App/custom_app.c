@@ -37,15 +37,12 @@ extern RTC_HandleTypeDef hrtc;
 typedef struct
 {
   /* INFO */
-  /* SENSORS */
-  uint8_t               Temp_Notification_Status;
-  uint8_t               Acc_Notification_Status;
+  /* TEMPERATURE */
+  uint8_t               Temp_char_Notification_Status;
+  uint8_t               Alt_temp_char_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
-  uint8_t               hw_ts_id_timer_acc;
-  uint32_t              hw_ts_timeout_acc;        // [ms]
-
   uint8_t               hw_ts_id_timer_temp;
-  uint32_t              hw_ts_timeout_temp;        // [ms]
+  uint32_t              timeout_notify_temp;        // [ms]
 
   Temperature_TypeDef   temperature_sensor;
   /* USER CODE END CUSTOM_APP_Context_t */
@@ -62,21 +59,24 @@ typedef struct
 #define CUSTOM_APP_DEFAULT_TIMEOUT_ACC  (5000)      // [ms]
 #define CUSTOM_APP_DEFAULT_TIMEOUT_TEMP (5000)      // [ms]
 
-// COMAND WRITE TEMPERATURE DEFINIE
-#define CUSTOM_APP_CMD_TEMP_CHANGE_ODR        (0x80)
-#define CUSTOM_APP_CMD_TEMP_UNIT_ODR_SECONDS  (0x00)
-#define CUSTOM_APP_CMD_TEMP_CHANGE_THRESHOLD  (0x04)
-#define CUSTOM_APP_CMD_TEMP_CHANGE_THL_ON     (0x02)
-#define CUSTOM_APP_CMD_TEMP_CHANGE_THH_ON     (0x01)
+#define CUSTOM_APP_CMD_ALT_TEMP_OFF     (0x01)
+#define CUSTOM_APP_CMD_ALT_TEMP_ON      (0x02)
 /* USER CODE END PD */
 
 /* Private macros -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms) ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
+#define CUSTOM_APP_HW_TS_WAIT_MILLIS(ms)          ((uint32_t) (ms) * 1000U / CFG_TS_TICK_VAL)
 
 // COMAND WRITE TEMPERATURE MACRO
-#define CUSTOM_APP_CMD_TEMP_UNIT_ODR(cmd)           ((cmd >> 6) & 0x01)
-#define CUSTOM_APP_CMD_TEMP_VALUE_ODR(cmd)          ((cmd >> 3) & 0x07)
+#define CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd)         ((cmd & 0xC0) >> 6)
+#define CUSTOM_APP_CMD_TEMP_IS_VALID(cmd)         (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) != 0x00)
+#define CUSTOM_APP_CMD_TEMP_UNIT_MULT(cmd)        (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) == 0x01 ? (1) : (CUSTOM_APP_CMD_TEMP_GET_UNIT(cmd) == 0x02 ? (60) : (60*60))) // seconds
+#define CUSTOM_APP_CMD_TEMP_VALUE(cmd)            (cmd & 0x3F) // seconds
+
+#define CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd)      ((cmd >> 4) & 0x0F)
+#define CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd)      (cmd & 0x0F)
+#define CUSTOM_APP_CMD_ALT_TEMP_CHANGE(cmd)       ((cmd == CUSTOM_APP_CMD_ALT_TEMP_OFF) || (cmd == CUSTOM_APP_CMD_ALT_TEMP_ON))
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -99,21 +99,22 @@ uint16_t Connection_Handle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* INFO */
-/* SENSORS */
-static void Custom_Temp_Update_Char(void);
+/* TEMPERATURE */
+static void Custom_Temp_char_Update_Char(void);
 
-static void Custom_Temp_Send_Notification(void);
+static void Custom_Temp_char_Send_Notification(void);
 
-static void Custom_Acc_Update_Char(void);
+static void Custom_Alt_temp_char_Update_Char(void);
 
-static void Custom_Acc_Send_Notification(void);
+static void Custom_Alt_temp_char_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
-static void Custom_App_AccRead();
+// static void Custom_App_AccRead();
 static void Custom_App_TempRead();
+static void Custom_App_AlertTemp();
 
 static void Custom_App_TempControl(uint8_t *data , uint8_t size);
-static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value);
+static void Custom_App_TempAlertControl(uint8_t *data , uint8_t size);
 /* USER CODE END PFP */
 
 /* Functions Definition ------------------------------------------------------*/
@@ -169,55 +170,49 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
       /* USER CODE END CUSTOM_STM_DATETIME_WRITE_NO_RESP_EVT */
       break;
 
-    /* SENSORS */
-    case CUSTOM_STM_TEMP_READ_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_TEMP_READ_EVT */
+    /* TEMPERATURE */
+    case CUSTOM_STM_TEMP_CHAR_READ_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_CHAR_READ_EVT */
       Custom_App_TempRead();
-      // UTIL_SEQ_SetTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
-      /* USER CODE END CUSTOM_STM_TEMP_READ_EVT */
+      /* USER CODE END CUSTOM_STM_TEMP_CHAR_READ_EVT */
       break;
 
-    case CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
-      Custom_App_Context.Temp_Notification_Status = ENABLE;
-      Temperature_StartPeriodicMeasure(&Custom_App_Context.temperature_sensor, Custom_App_Context.hw_ts_timeout_temp);
-      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
-      /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_ENABLED_EVT */
+    case CUSTOM_STM_TEMP_CHAR_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_CHAR_NOTIFY_ENABLED_EVT */
+      Custom_App_Context.Temp_char_Notification_Status = ENABLE;
+      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, Custom_App_Context.timeout_notify_temp);
+      /* USER CODE END CUSTOM_STM_TEMP_CHAR_NOTIFY_ENABLED_EVT */
       break;
 
-    case CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
-      Custom_App_Context.Temp_Notification_Status = DISABLE;
-      Temperature_StopPeriodicMeasure(&Custom_App_Context.temperature_sensor);
+    case CUSTOM_STM_TEMP_CHAR_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_TEMP_CHAR_NOTIFY_DISABLED_EVT */
+      Custom_App_Context.Temp_char_Notification_Status = DISABLE;
       HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
-      /* USER CODE END CUSTOM_STM_TEMP_NOTIFY_DISABLED_EVT */
+      /* USER CODE END CUSTOM_STM_TEMP_CHAR_NOTIFY_DISABLED_EVT */
       break;
 
-    case CUSTOM_STM_ACC_READ_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_ACC_READ_EVT */
-      Custom_App_AccRead();
-      // UTIL_SEQ_SetTask(1 << CFG_TASK_READ_ACC_EVENT_ID, CFG_SCH_PRIO_SENSORS);
-      /* USER CODE END CUSTOM_STM_ACC_READ_EVT */
+    case CUSTOM_STM_CTRL_TEMP_CHAR_WRITE_NO_RESP_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_CTRL_TEMP_CHAR_WRITE_NO_RESP_EVT */
+      Custom_App_TempControl(pNotification->DataTransfered.pPayload, pNotification->DataTransfered.Length);
+      /* USER CODE END CUSTOM_STM_CTRL_TEMP_CHAR_WRITE_NO_RESP_EVT */
       break;
 
-    case CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
-      Custom_App_Context.Acc_Notification_Status = ENABLE;
-      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc , CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
-      /* USER CODE END CUSTOM_STM_ACC_NOTIFY_ENABLED_EVT */
+    case CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_ENABLED_EVT */
+      Custom_App_Context.Alt_temp_char_Notification_Status = ENABLE;
+      /* USER CODE END CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_ENABLED_EVT */
       break;
 
-    case CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
-      Custom_App_Context.Acc_Notification_Status = DISABLE;
-      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_acc);
-      /* USER CODE END CUSTOM_STM_ACC_NOTIFY_DISABLED_EVT */
+    case CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_DISABLED_EVT */
+      Custom_App_Context.Alt_temp_char_Notification_Status = DISABLE;
+      /* USER CODE END CUSTOM_STM_ALT_TEMP_CHAR_NOTIFY_DISABLED_EVT */
       break;
 
-    case CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
-      Custom_App_TempControl(pNotification->DataTransfered.pPayload , pNotification->DataTransfered.Length);
-      /* USER CODE END CUSTOM_STM_CTRL_TEMP_WRITE_NO_RESP_EVT */
+    case CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT */
+      Custom_App_TempAlertControl(pNotification->DataTransfered.pPayload , pNotification->DataTransfered.Length);
+      /* USER CODE END CUSTOM_STM_CTRL_ALT_CHAR_WRITE_EVT */
       break;
 
     case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
@@ -278,13 +273,15 @@ void Custom_APP_Notification(Custom_App_ConnHandle_Not_evt_t *pNotification)
 void Custom_APP_Init(void)
 {
   /* USER CODE BEGIN CUSTOM_APP_Init */
-  Custom_App_Context.hw_ts_timeout_acc = CUSTOM_APP_DEFAULT_TIMEOUT_ACC;
-  UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
-  HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_SingleShot, NULL);
+  // Custom_App_Context.hw_ts_timeout_acc = CUSTOM_APP_DEFAULT_TIMEOUT_ACC;
+  // UTIL_SEQ_RegTask(1 << CFG_TASK_READ_ACC_EVENT_ID, 0 , Custom_App_AccRead);
+  // HW_TS_Create(CFG_TASK_READ_ACC_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_acc, hw_ts_SingleShot, NULL);
   
-  Custom_App_Context.hw_ts_timeout_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
+  Custom_App_Context.timeout_notify_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
   UTIL_SEQ_RegTask(1 << CFG_TASK_READ_TEMP_EVENT_ID, 0 , Custom_App_TempRead);
   HW_TS_Create(CFG_TASK_READ_TEMP_EVENT_ID, &Custom_App_Context.hw_ts_id_timer_temp, hw_ts_SingleShot, NULL);
+
+  UTIL_SEQ_RegTask(1 << CFG_TASK_ALT_TEMP_EVENT_ID, 0 , Custom_App_AlertTemp);
 
   Temperature_Init(&Custom_App_Context.temperature_sensor);
   /* USER CODE END CUSTOM_APP_Init */
@@ -304,17 +301,17 @@ void HW_TS_RTC_Int_AppNot(uint32_t TimerProcessID, uint8_t TimerID, HW_TS_pTimer
   return;
 }
 
-static void Custom_App_AccRead(){
-  // Get DATA
-  uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , HAL_GetTick() / 1000 & 0xFF};
+// static void Custom_App_AccRead(){
+//   // // Get DATA
+//   // uint8_t dummy_data_acc[6] = {0xFF , 0xEE , 0xDD , 0xCC , 0xBB , HAL_GetTick() / 1000 & 0xFF};
 
-  // Send DATA
-  Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
+//   // // Send DATA
+//   // Custom_STM_App_Update_Char(CUSTOM_STM_ACC, dummy_data_acc);
 
-  if(Custom_App_Context.Acc_Notification_Status == ENABLE){
-    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
-  }
-}
+//   // if(Custom_App_Context.Acc_Notification_Status == ENABLE){
+//   //   HW_TS_Start(Custom_App_Context.hw_ts_id_timer_acc, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_acc));
+//   // }
+// }
 
 static void Custom_App_TempRead(){
   // Get DATA
@@ -324,14 +321,47 @@ static void Custom_App_TempRead(){
   uint8_t value[2] = {raw & 0xFF , (raw >> 8) & 0XFF};
 
   // Send DATA
-  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, value);
+  Custom_STM_App_Update_Char(CUSTOM_STM_TEMP_CHAR, value);
 
-  if(Custom_App_Context.Temp_Notification_Status == ENABLE){
-    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.hw_ts_timeout_temp));
+  if(Custom_App_Context.Temp_char_Notification_Status == ENABLE){
+    HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp, CUSTOM_APP_HW_TS_WAIT_MILLIS(Custom_App_Context.timeout_notify_temp));
   }
 }
 
 static void Custom_App_TempControl(uint8_t *data , uint8_t size){
+  if(data == NULL || size != 1){
+    return;
+  }
+  uint8_t cmd = data[0];
+
+  if(CUSTOM_APP_CMD_TEMP_IS_VALID(cmd)){ // Change ODR
+    uint32_t multiply = CUSTOM_APP_CMD_TEMP_UNIT_MULT(cmd) * 1000; // ms
+    uint32_t timeout = multiply * CUSTOM_APP_CMD_TEMP_VALUE(cmd);
+    if(timeout == 0){
+      Custom_App_Context.timeout_notify_temp = CUSTOM_APP_DEFAULT_TIMEOUT_TEMP;
+    } else {
+      Custom_App_Context.timeout_notify_temp = timeout;
+    }
+    if(Custom_App_Context.Temp_char_Notification_Status == ENABLE){
+      HW_TS_Stop(Custom_App_Context.hw_ts_id_timer_temp);
+      HW_TS_Start(Custom_App_Context.hw_ts_id_timer_temp , Custom_App_Context.timeout_notify_temp);
+    }
+  }
+}
+
+static void Custom_App_AlertTemp(){
+  if(Custom_App_Context.Alt_temp_char_Notification_Status == ENABLE){
+    uint8_t data = 0;
+    int16_t temp = 0;
+    Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
+    Temperature_ReadEvent(&Custom_App_Context.temperature_sensor , &data);
+    uint16_t raw = (uint16_t) temp;
+    uint8_t value[3] = { data, raw & 0xFF, (raw >> 8) & 0XFF};
+    Custom_STM_App_Update_Char(CUSTOM_STM_ALT_TEMP_CHAR, value);
+  }
+}
+
+static void Custom_App_TempAlertControl(uint8_t *data , uint8_t size){
   if(data == NULL || size != 3){
     return;
   }
@@ -339,19 +369,16 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
   int8_t thl = data[1];
   int8_t thh = data[2];
 
-  if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_ODR){ // Change ODR
-    Custom_App_Context.hw_ts_timeout_temp = get_timeout_millis_temp(
-                                                CUSTOM_APP_CMD_TEMP_UNIT_ODR(cmd),
-                                                CUSTOM_APP_CMD_TEMP_VALUE_ODR(cmd));
-  }
-  if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THRESHOLD){ // Change Threshold
-    if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THL_ON){
+  if(CUSTOM_APP_CMD_ALT_TEMP_CHANGE(CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd))) {
+    if(CUSTOM_APP_CMD_ALT_TEMP_THL_CMD(cmd) == CUSTOM_APP_CMD_ALT_TEMP_ON){
       Temperature_SetLowLimit(&Custom_App_Context.temperature_sensor, thl);
     } else {
       Temperature_StopLowLimit(&Custom_App_Context.temperature_sensor);
     }
+  }
 
-    if(cmd & CUSTOM_APP_CMD_TEMP_CHANGE_THH_ON){
+  if(CUSTOM_APP_CMD_ALT_TEMP_CHANGE(CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd))) {
+    if(CUSTOM_APP_CMD_ALT_TEMP_THH_CMD(cmd) == CUSTOM_APP_CMD_ALT_TEMP_ON){
       Temperature_SetHighLimit(&Custom_App_Context.temperature_sensor, thh);
     } else {
       Temperature_StopHighLimit(&Custom_App_Context.temperature_sensor);
@@ -359,48 +386,9 @@ static void Custom_App_TempControl(uint8_t *data , uint8_t size){
   }
 }
 
-static uint32_t get_timeout_millis_temp(uint8_t unit , uint8_t value){
-  uint32_t m_seconds = 1000;
-  switch (value) {
-    case 1:
-      m_seconds *= 2;
-      break;
-    case 2:
-      m_seconds *= 5;
-      break;
-    case 3:
-      m_seconds *= 10;
-      break;
-    case 4:
-      m_seconds *= 15;
-      break;
-    case 5:
-      m_seconds *= 20;
-      break;
-    case 6:
-      m_seconds *= 30;
-      break;
-    case 7:
-      m_seconds *= 45;
-      break;
-    default:
-      m_seconds *= 1;
-      break;
-  }
-  return unit == CUSTOM_APP_CMD_TEMP_UNIT_ODR_SECONDS ? m_seconds : (m_seconds * 60);
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin == STTS22H_ALERT_Pin){
-    uint8_t data = 0;
-    int16_t temp = 0;
-    Temperature_ReadTemp(&Custom_App_Context.temperature_sensor, &temp);
-    Temperature_ReadEvent(&Custom_App_Context.temperature_sensor , &data);
-    if (data == STTS22H_EVENT_OVER_THH){
-      // TODO
-    } else if (data == STTS22H_EVENT_UNDER_THL){
-      // TODO
-    }
+    UTIL_SEQ_SetTask(1 << CFG_TASK_ALT_TEMP_EVENT_ID, CFG_SCH_PRIO_SENSORS);
   }
 }
 
@@ -413,81 +401,81 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
  *************************************************************/
 
 /* INFO */
-/* SENSORS */
-__USED void Custom_Temp_Update_Char(void) /* Property Read */
+/* TEMPERATURE */
+__USED void Custom_Temp_char_Update_Char(void) /* Property Read */
 {
   uint8_t updateflag = 0;
 
-  /* USER CODE BEGIN Temp_UC_1*/
+  /* USER CODE BEGIN Temp_char_UC_1*/
 
-  /* USER CODE END Temp_UC_1*/
+  /* USER CODE END Temp_char_UC_1*/
 
   if (updateflag != 0)
   {
-    Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, (uint8_t *)UpdateCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_TEMP_CHAR, (uint8_t *)UpdateCharData);
   }
 
-  /* USER CODE BEGIN Temp_UC_Last*/
+  /* USER CODE BEGIN Temp_char_UC_Last*/
 
-  /* USER CODE END Temp_UC_Last*/
+  /* USER CODE END Temp_char_UC_Last*/
   return;
 }
 
-__USED void Custom_Temp_Send_Notification(void) /* Property Notification */
+__USED void Custom_Temp_char_Send_Notification(void) /* Property Notification */
 {
   uint8_t updateflag = 0;
 
-  /* USER CODE BEGIN Temp_NS_1*/
+  /* USER CODE BEGIN Temp_char_NS_1*/
 
-  /* USER CODE END Temp_NS_1*/
+  /* USER CODE END Temp_char_NS_1*/
 
   if (updateflag != 0)
   {
-    Custom_STM_App_Update_Char(CUSTOM_STM_TEMP, (uint8_t *)UpdateCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_TEMP_CHAR, (uint8_t *)UpdateCharData);
   }
 
-  /* USER CODE BEGIN Temp_NS_Last*/
+  /* USER CODE BEGIN Temp_char_NS_Last*/
 
-  /* USER CODE END Temp_NS_Last*/
+  /* USER CODE END Temp_char_NS_Last*/
 
   return;
 }
 
-__USED void Custom_Acc_Update_Char(void) /* Property Read */
+__USED void Custom_Alt_temp_char_Update_Char(void) /* Property Read */
 {
   uint8_t updateflag = 0;
 
-  /* USER CODE BEGIN Acc_UC_1*/
+  /* USER CODE BEGIN Alt_temp_char_UC_1*/
 
-  /* USER CODE END Acc_UC_1*/
+  /* USER CODE END Alt_temp_char_UC_1*/
 
   if (updateflag != 0)
   {
-    Custom_STM_App_Update_Char(CUSTOM_STM_ACC, (uint8_t *)UpdateCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_ALT_TEMP_CHAR, (uint8_t *)UpdateCharData);
   }
 
-  /* USER CODE BEGIN Acc_UC_Last*/
+  /* USER CODE BEGIN Alt_temp_char_UC_Last*/
 
-  /* USER CODE END Acc_UC_Last*/
+  /* USER CODE END Alt_temp_char_UC_Last*/
   return;
 }
 
-__USED void Custom_Acc_Send_Notification(void) /* Property Notification */
+__USED void Custom_Alt_temp_char_Send_Notification(void) /* Property Notification */
 {
   uint8_t updateflag = 0;
 
-  /* USER CODE BEGIN Acc_NS_1*/
+  /* USER CODE BEGIN Alt_temp_char_NS_1*/
 
-  /* USER CODE END Acc_NS_1*/
+  /* USER CODE END Alt_temp_char_NS_1*/
 
   if (updateflag != 0)
   {
-    Custom_STM_App_Update_Char(CUSTOM_STM_ACC, (uint8_t *)UpdateCharData);
+    Custom_STM_App_Update_Char(CUSTOM_STM_ALT_TEMP_CHAR, (uint8_t *)UpdateCharData);
   }
 
-  /* USER CODE BEGIN Acc_NS_Last*/
+  /* USER CODE BEGIN Alt_temp_char_NS_Last*/
 
-  /* USER CODE END Acc_NS_Last*/
+  /* USER CODE END Alt_temp_char_NS_Last*/
 
   return;
 }
